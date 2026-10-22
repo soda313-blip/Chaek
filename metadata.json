@@ -1,0 +1,6 @@
+{
+  "name": "ChaekScan",
+  "description": "Smart textbook price-comparison and logistics analysis platform for undergraduate students in South Korea across Kyobo, YES24, Aladin, Youngpoong, Bookstore ON, 11st Books, and Coupang.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
