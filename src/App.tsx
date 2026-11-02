@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
   Search,
-  ShoppingBag,
   ExternalLink,
   Check,
   Plus,
@@ -17,16 +16,19 @@ import {
   Laptop,
   ArrowRight,
   BookMarked,
+  Globe,
 } from 'lucide-react';
 import {
   TextbookAnalysisResult,
   PlatformOffer,
   StudentPreferences,
-  CartItem,
+  BookBagItem,
+  AppLanguage,
   SkkuCampus,
   SkkuLibraryHolding,
 } from './types/textbook';
 import { PRESET_TEXTBOOKS } from './data/presetTextbooks';
+import { TRANSLATIONS } from './data/translations';
 
 type ConditionFilter = 'all' | 'new' | 'used' | 'digital';
 type SortMode = 'total_cost' | 'effective_cost' | 'speed';
@@ -36,6 +38,24 @@ function formatKrw(amount: number): string {
 }
 
 export default function App() {
+  // Language State: 'ko' (한국어) or 'en' (English)
+  const [lang, setLang] = useState<AppLanguage>(() => {
+    try {
+      const saved = localStorage.getItem('chaekscan_lang');
+      if (saved === 'ko' || saved === 'en') return saved;
+    } catch {}
+    return 'ko';
+  });
+
+  const handleToggleLanguage = (newLang: AppLanguage) => {
+    setLang(newLang);
+    try {
+      localStorage.setItem('chaekscan_lang', newLang);
+    } catch {}
+  };
+
+  const t = TRANSLATIONS[lang];
+
   // No textbook is displayed until the user searches for one
   const [activeTextbook, setActiveTextbook] = useState<TextbookAnalysisResult | null>(
     null
@@ -79,9 +99,9 @@ export default function App() {
   // Expanded offer row
   const [expandedOfferId, setExpandedOfferId] = useState<string | null>(null);
 
-  // Semester Cart state (starts empty)
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
+  // Semester Book Bag state (starts empty)
+  const [bookBag, setBookBag] = useState<BookBagItem[]>([]);
+  const [isBookBagOpen, setIsBookBagOpen] = useState(false);
 
   // Advisor Q&A state
   const [advisorQuestion, setAdvisorQuestion] = useState('');
@@ -279,41 +299,56 @@ export default function App() {
     await executeSearch(searchQuery);
   };
 
-  const handleAddToCart = (offer: PlatformOffer) => {
+  const handleAddToBookBag = (offer: PlatformOffer) => {
     if (!activeTextbook) return;
-    const newItem: CartItem = {
-      cartItemId: `${activeTextbook.id}-${offer.id}`,
+    const newItem: BookBagItem = {
+      bagItemId: `${activeTextbook.id}-${offer.id}`,
       textbookId: activeTextbook.id,
       textbookTitleKo: activeTextbook.titleKo,
+      textbookTitleEn: activeTextbook.titleEn,
       isbn13: activeTextbook.isbn13,
       listPriceKrw: activeTextbook.listPriceKrw,
       offer,
     };
 
-    setCart((prev) => {
+    setBookBag((prev) => {
       const filtered = prev.filter((item) => item.textbookId !== activeTextbook.id);
       return [...filtered, newItem];
     });
   };
 
-  const handleRemoveFromCart = (cartItemId: string) => {
-    setCart((prev) => prev.filter((item) => item.cartItemId !== cartItemId));
+  const handleRemoveFromBookBag = (bagItemId: string) => {
+    setBookBag((prev) => prev.filter((item) => item.bagItemId !== bagItemId));
   };
 
   const handleExportCsv = () => {
     if (!activeTextbook) return;
-    const headers = [
-      'Rank',
-      'Platform',
-      'Condition',
-      'Base Price (KRW)',
-      'Shipping Fee (KRW)',
-      'Total Cost (KRW)',
-      'Reward Points (KRW)',
-      'Delivery Estimate',
-      'Stock Status',
-      'Direct URL',
-    ];
+    const headers =
+      lang === 'ko'
+        ? [
+            '순위',
+            '서점',
+            '상태',
+            '도서 가격 (원)',
+            '배송비 (원)',
+            '총 실구매가 (원)',
+            '예상 적립금 (원)',
+            '배송 예정',
+            '재고 상태',
+            '서점 바로가기 URL',
+          ]
+        : [
+            'Rank',
+            'Platform',
+            'Condition',
+            'Base Price (KRW)',
+            'Shipping Fee (KRW)',
+            'Total Cost (KRW)',
+            'Reward Points (KRW)',
+            'Delivery Estimate',
+            'Stock Status',
+            'Direct URL',
+          ];
     const rows = processedOffers.map(({ offer, metrics }, idx) => [
       idx + 1,
       `"${offer.platformNameKo}"`,
@@ -333,7 +368,7 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `chaekscan_${activeTextbook.isbn13}.csv`);
+    link.setAttribute('download', `chaekscan_${activeTextbook.isbn13}_${lang}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -372,19 +407,19 @@ export default function App() {
     }
   };
 
-  const cartSummary = useMemo(() => {
+  const bookBagSummary = useMemo(() => {
     let totalListPrice = 0;
     let totalBasePrice = 0;
     let totalShipping = 0;
     let totalPoints = 0;
 
     const platformSubtotals: Record<string, number> = {};
-    cart.forEach((item) => {
+    bookBag.forEach((item) => {
       platformSubtotals[item.offer.platformId] =
         (platformSubtotals[item.offer.platformId] || 0) + item.offer.basePriceKrw;
     });
 
-    cart.forEach((item) => {
+    bookBag.forEach((item) => {
       totalListPrice += item.listPriceKrw;
       totalBasePrice += item.offer.basePriceKrw;
       totalPoints += item.offer.rewardPointsKrw;
@@ -414,14 +449,14 @@ export default function App() {
       grandTotal,
       totalSaved,
     };
-  }, [cart, preferences.hasWowMembership]);
+  }, [bookBag, preferences.hasWowMembership]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF9F6] text-slate-900">
-      {/* Minimal Header */}
-      <header className="sticky top-0 z-30 bg-[#FAF9F6]/95 backdrop-blur-sm border-b border-slate-200 px-6 lg:px-12 py-3.5">
-        <div className="max-w-[1160px] mx-auto flex items-center justify-between gap-4 sm:gap-8">
-          <div className="flex items-center gap-3 sm:gap-5">
+      {/* Header with SKKU Campus, Language Toggle & Book Bag */}
+      <header className="sticky top-0 z-30 bg-[#FAF9F6]/95 backdrop-blur-sm border-b border-slate-200 px-4 sm:px-6 lg:px-12 py-3">
+        <div className="max-w-[1160px] mx-auto flex flex-wrap items-center justify-between gap-3 sm:gap-6">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
             <button
               type="button"
               onClick={() => {
@@ -429,16 +464,16 @@ export default function App() {
                 setSearchQuery('');
                 setSearchError(null);
               }}
-              className="text-lg font-bold tracking-tight text-slate-900 whitespace-nowrap shrink-0 font-display cursor-pointer"
+              className="text-lg font-bold tracking-tight text-slate-900 whitespace-nowrap shrink-0 font-display cursor-pointer hover:text-blue-900 transition-colors"
             >
-              ChaekScan
+              {t.brandTitle}
             </button>
 
             {/* SKKU Campus Switcher */}
             <div className="inline-flex items-center bg-slate-200/80 p-0.5 rounded-lg text-xs font-medium">
-              <span className="hidden sm:inline-flex items-center gap-1 px-2 text-slate-700 font-semibold border-r border-slate-300 mr-0.5">
+              <span className="hidden md:inline-flex items-center gap-1 px-2 text-slate-700 font-semibold border-r border-slate-300 mr-0.5">
                 <GraduationCap className="w-3.5 h-3.5 text-emerald-800" />
-                <span>성균관대</span>
+                <span>{t.skkuBadge}</span>
               </span>
               <button
                 type="button"
@@ -448,9 +483,9 @@ export default function App() {
                     ? 'bg-white text-slate-900 font-bold shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
-                title="인문사회과학캠퍼스 (서울) 중앙도서관·법학도서관·존경각"
+                title={t.campusSeoulTooltip}
               >
-                인사캠 (서울)
+                {t.campusSeoul}
               </button>
               <button
                 type="button"
@@ -460,23 +495,56 @@ export default function App() {
                     ? 'bg-white text-slate-900 font-bold shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
-                title="자연과학캠퍼스 (수원) 삼성학술정보관·의학도서관"
+                title={t.campusSuwonTooltip}
               >
-                자캠 (수원)
+                {t.campusSuwon}
+              </button>
+            </div>
+
+            {/* Language Switcher (Korean / English) */}
+            <div className="inline-flex items-center bg-slate-200/80 p-0.5 rounded-lg text-xs font-medium">
+              <span className="hidden sm:inline-flex items-center px-1.5 text-slate-600">
+                <Globe className="w-3.5 h-3.5" />
+              </span>
+              <button
+                type="button"
+                onClick={() => handleToggleLanguage('ko')}
+                className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                  lang === 'ko'
+                    ? 'bg-white text-slate-900 font-bold shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+                title="한국어 검색 및 안내 페이지로 전환"
+              >
+                한국어
+              </button>
+              <button
+                type="button"
+                onClick={() => handleToggleLanguage('en')}
+                className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                  lang === 'en'
+                    ? 'bg-white text-slate-900 font-bold shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+                title="Switch to English search & guide page"
+              >
+                English
               </button>
             </div>
           </div>
 
+          {/* Book Bag Button */}
           <div className="flex items-center shrink-0">
             <button
               type="button"
-              onClick={() => setIsCartOpen(true)}
-              className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              onClick={() => setIsBookBagOpen(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors whitespace-nowrap shrink-0 cursor-pointer shadow-xs"
+              title={t.bookBagBtn(bookBag.length)}
             >
-              <ShoppingBag className="w-3.5 h-3.5" />
+              <BookMarked className="w-3.5 h-3.5 text-amber-300" />
               <span>
-                Cart ({cart.length})
-                {cart.length > 0 ? ` · ${formatKrw(cartSummary.grandTotal)}` : ''}
+                {t.bookBagBtn(bookBag.length)}
+                {bookBag.length > 0 ? ` · ${formatKrw(bookBagSummary.grandTotal)}` : ''}
               </span>
             </button>
           </div>
@@ -494,11 +562,10 @@ export default function App() {
           {!activeTextbook && !isSearching && (
             <div className="space-y-2">
               <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-slate-900">
-                University Textbook Price Finder
+                {t.heroTitle}
               </h1>
               <p className="text-sm text-slate-600">
-                Compare total prices with shipping across Kyobo, YES24, Aladin, Youngpoong,
-                Bookstore ON, 11st, and Coupang.
+                {t.heroSubtitle}
               </p>
             </div>
           )}
@@ -511,7 +578,7 @@ export default function App() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by textbook title, author, or ISBN (e.g. 미분적분학, 맨큐의 경제학, 9791160733877)"
+                placeholder={t.searchPlaceholder}
                 className="w-full px-2 py-2 text-sm bg-transparent text-slate-900 placeholder:text-slate-400 focus:outline-none"
               />
               {searchQuery && (
@@ -519,7 +586,7 @@ export default function App() {
                   type="button"
                   onClick={() => setSearchQuery('')}
                   className="p-1.5 text-slate-400 hover:text-slate-600 cursor-pointer"
-                  aria-label="Clear search"
+                  aria-label={t.clearSearch}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -529,7 +596,7 @@ export default function App() {
                 disabled={isSearching}
                 className="px-5 py-2 text-sm font-semibold text-white bg-blue-900 rounded-lg hover:bg-blue-800 disabled:opacity-60 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
               >
-                {isSearching ? 'Searching...' : 'Search'}
+                {isSearching ? t.searchingBtn : t.searchBtn}
               </button>
             </div>
 
@@ -544,16 +611,16 @@ export default function App() {
           {/* Subtle quick-try links ONLY when no book is searched yet */}
           {!activeTextbook && !isSearching && (
             <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-slate-500 pt-1">
-              <span>Try:</span>
-              {['미분적분학', '맨큐의 경제학', '운영체제', '맥머리 유기화학'].map((sample, idx) => (
-                <React.Fragment key={sample}>
+              <span>{t.tryPrefix}</span>
+              {t.tryItems.map((item, idx) => (
+                <React.Fragment key={item.label}>
                   {idx > 0 && <span aria-hidden="true">·</span>}
                   <button
                     type="button"
-                    onClick={() => executeSearch(sample)}
+                    onClick={() => executeSearch(item.query)}
                     className="text-slate-700 hover:text-blue-900 hover:underline cursor-pointer"
                   >
-                    {sample}
+                    {item.label}
                   </button>
                 </React.Fragment>
               ))}
@@ -566,9 +633,9 @@ export default function App() {
           <section className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between text-xs text-slate-600">
               <span className="font-semibold text-slate-900">
-                Comparing 7 Korean bookstores for &ldquo;{searchQuery}&rdquo;...
+                {t.searchingStatus(searchQuery)}
               </span>
-              <span className="font-mono tabular-nums">Calculating shipping fees</span>
+              <span className="font-mono tabular-nums">{t.calculatingShipping}</span>
             </div>
             <div className="space-y-2.5">
               {[1, 2, 3, 4].map((n) => (
@@ -606,8 +673,15 @@ export default function App() {
 
                   <div className="space-y-1">
                     <h2 className="text-lg sm:text-xl font-bold text-slate-900">
-                      {activeTextbook.titleKo}
+                      {lang === 'en' && activeTextbook.titleEn
+                        ? activeTextbook.titleEn
+                        : activeTextbook.titleKo}
                     </h2>
+                    {lang === 'en' && activeTextbook.titleEn && (
+                      <p className="text-xs text-slate-600 font-medium">
+                        {activeTextbook.titleKo}
+                      </p>
+                    )}
                     <p className="text-xs text-slate-500">
                       <span>{activeTextbook.authors}</span>
                       <span className="mx-1.5" aria-hidden="true">
@@ -622,7 +696,7 @@ export default function App() {
                       </span>
                     </p>
                     <p className="text-xs text-slate-500 font-mono tabular-nums pt-0.5">
-                      List Price: <span className="line-through">{formatKrw(activeTextbook.listPriceKrw)}</span>
+                      {t.listPriceLabel}: <span className="line-through">{formatKrw(activeTextbook.listPriceKrw)}</span>
                     </p>
                   </div>
                 </div>
@@ -632,7 +706,7 @@ export default function App() {
                   <div className="grid grid-cols-3 gap-3 sm:gap-4 shrink-0 border-t lg:border-t-0 pt-4 lg:pt-0 border-slate-100">
                     {summaryBenchmarks.cheapestOverall && (
                       <div className="px-3.5 py-2.5 rounded-lg bg-[#FAF9F6] border border-slate-200/80">
-                        <div className="text-[11px] text-slate-500">Cheapest Total</div>
+                        <div className="text-[11px] text-slate-500">{t.cheapestOverallLabel}</div>
                         <div className="text-lg sm:text-xl font-bold text-emerald-700 font-mono tabular-nums">
                           {formatKrw(summaryBenchmarks.cheapestOverall.metrics.totalCost)}
                         </div>
@@ -644,7 +718,7 @@ export default function App() {
 
                     {summaryBenchmarks.cheapestNew && (
                       <div className="px-3.5 py-2.5 rounded-lg bg-[#FAF9F6] border border-slate-200/80">
-                        <div className="text-[11px] text-slate-500">Lowest New</div>
+                        <div className="text-[11px] text-slate-500">{t.lowestNewLabel}</div>
                         <div className="text-lg sm:text-xl font-bold text-slate-900 font-mono tabular-nums">
                           {formatKrw(summaryBenchmarks.cheapestNew.metrics.totalCost)}
                         </div>
@@ -656,7 +730,7 @@ export default function App() {
 
                     {summaryBenchmarks.fastestOption && (
                       <div className="px-3.5 py-2.5 rounded-lg bg-[#FAF9F6] border border-slate-200/80">
-                        <div className="text-[11px] text-slate-500">Fastest Delivery</div>
+                        <div className="text-[11px] text-slate-500">{t.fastestDeliveryLabel}</div>
                         <div className="text-lg sm:text-xl font-bold text-blue-900 font-mono tabular-nums">
                           {formatKrw(summaryBenchmarks.fastestOption.metrics.totalCost)}
                         </div>
@@ -682,16 +756,16 @@ export default function App() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-100 text-emerald-800">
                         <GraduationCap className="w-3.5 h-3.5" />
-                        <span>성균관대학교 학술정보관</span>
+                        <span>{lang === 'en' ? 'SKKU Library' : '성균관대학교 학술정보관'}</span>
                       </span>
                       <span className="text-xs text-slate-500 font-medium">
-                        (SKKU Library Official Catalog)
+                        (lib.skku.edu)
                       </span>
                     </div>
                     <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
-                      <span>도서관 소장 현황 및 무료 대출 비교</span>
+                      <span>{t.skkuSectionTitle}</span>
                       <span className="text-xs font-normal text-slate-500 hidden sm:inline">
-                        · 엄격 대출가능(Shelf-Available) 기준 필터링
+                        {t.skkuSectionSubtitle}
                       </span>
                     </h3>
                   </div>
@@ -707,8 +781,9 @@ export default function App() {
                             ? 'bg-emerald-700 text-white shadow-xs font-semibold'
                             : 'text-slate-600 hover:text-slate-900'
                         }`}
+                        title={t.campusSeoulTooltip}
                       >
-                        인사캠 (서울)
+                        {t.campusSeoul}
                       </button>
                       <button
                         type="button"
@@ -718,17 +793,18 @@ export default function App() {
                             ? 'bg-emerald-700 text-white shadow-xs font-semibold'
                             : 'text-slate-600 hover:text-slate-900'
                         }`}
+                        title={t.campusSuwonTooltip}
                       >
-                        자캠 (수원)
+                        {t.campusSuwon}
                       </button>
                     </div>
 
                     <div className="px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg text-right">
                       <div className="text-[10px] text-emerald-700 font-medium uppercase tracking-wider">
-                        도서관 이용 시
+                        {t.skkuFreeBadge}
                       </div>
                       <div className="text-sm font-bold text-emerald-800 font-mono tabular-nums">
-                        ₩0 (무료)
+                        {t.skkuFreeSub}
                       </div>
                     </div>
                   </div>
@@ -738,18 +814,12 @@ export default function App() {
                 {summaryBenchmarks?.cheapestOverall && (
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3.5 py-2.5 bg-emerald-50/70 border border-emerald-200/80 rounded-lg text-xs text-emerald-900">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold">💡 구매 비용 절약:</span>
                       <span>
-                        도서관 대출/전자책을 이용하면 온라인 최저가(
-                        <strong className="font-semibold text-emerald-950 font-mono">
-                          {summaryBenchmarks.cheapestOverall.offer.platformNameKo} 기준{' '}
-                          {formatKrw(summaryBenchmarks.cheapestOverall.metrics.totalCost)}
-                        </strong>
-                        ) 대비{' '}
-                        <strong className="underline decoration-emerald-500 underline-offset-2">
-                          {formatKrw(summaryBenchmarks.cheapestOverall.metrics.totalCost)} 전액
-                        </strong>
-                        을 절약할 수 있습니다.
+                        {t.skkuSavingsNotice(
+                          summaryBenchmarks.cheapestOverall.offer.platformNameKo,
+                          formatKrw(summaryBenchmarks.cheapestOverall.metrics.totalCost),
+                          formatKrw(summaryBenchmarks.cheapestOverall.metrics.totalCost)
+                        )}
                       </span>
                     </div>
                     <a
@@ -758,7 +828,7 @@ export default function App() {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 font-semibold text-emerald-800 hover:text-emerald-950 hover:underline shrink-0"
                     >
-                      <span>SKKU 통합검색 바로가기</span>
+                      <span>{t.skkuDirectCatalogBtn}</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
@@ -768,10 +838,10 @@ export default function App() {
                 <div className="space-y-3">
                   <div className="text-xs font-bold text-slate-700 flex items-center justify-between">
                     <span>
-                      {skkuCampus === 'seoul' ? '인사캠 (서울)' : '자캠 (수원)'} 현장 소장 자료:
+                      {t.skkuShelfHoldingsTitle(skkuCampus === 'seoul' ? t.campusSeoul : t.campusSuwon)}
                     </span>
                     <span className="text-[11px] font-normal text-slate-500">
-                      ※ 대출 중인 자료는 자동 제외되어 현재 서가 비치본만 표시됩니다.
+                      {t.skkuStrictFilterNote}
                     </span>
                   </div>
 
@@ -785,10 +855,20 @@ export default function App() {
                           {/* Card Header: Badge & Campus/Repo */}
                           <div className="flex items-start justify-between gap-2">
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                              {holding.statusBadgeText}
+                              {lang === 'en'
+                                ? holding.status === 'ebook'
+                                  ? '[💻 E-Book Available]'
+                                  : holding.isAlternativeEdition
+                                    ? '[🟢 Prior Edition On Shelf]'
+                                    : '[🟢 Available Now / On Shelf]'
+                                : holding.statusBadgeText}
                             </span>
                             <span className="text-xs font-semibold text-slate-700 text-right">
-                              {holding.campusNameKo}
+                              {lang === 'en'
+                                ? holding.campus === 'seoul'
+                                  ? 'Seoul Campus'
+                                  : 'Suwon Campus'
+                                : holding.campusNameKo}
                             </span>
                           </div>
 
@@ -816,21 +896,21 @@ export default function App() {
                           {/* Repository, Call Number, Shelf Location */}
                           <div className="bg-white p-2.5 rounded border border-slate-200/80 text-xs space-y-1.5 font-mono">
                             <div className="flex items-start justify-between gap-2 font-sans">
-                              <span className="text-slate-500 text-[11px]">소장처 / 건물:</span>
+                              <span className="text-slate-500 text-[11px]">{t.skkuRepositoryLabel}</span>
                               <span className="font-semibold text-slate-800 text-right">
                                 {holding.repositoryName}
                               </span>
                             </div>
                             <div className="flex items-center justify-between gap-2">
                               <span className="text-slate-500 font-sans text-[11px]">
-                                청구기호 (Call No.):
+                                {t.skkuCallNumberLabel}
                               </span>
                               <span className="font-bold text-blue-900 bg-blue-50 px-1.5 py-0.5 rounded">
                                 {holding.callNumber}
                               </span>
                             </div>
                             <div className="flex items-start justify-between gap-2 font-sans">
-                              <span className="text-slate-500 text-[11px]">서가 위치 안내:</span>
+                              <span className="text-slate-500 text-[11px]">{t.skkuShelfLocationLabel}</span>
                               <span className="text-slate-700 text-right text-[11px]">
                                 {holding.shelfLocationGuidance}
                               </span>
@@ -845,7 +925,7 @@ export default function App() {
                               rel="noopener noreferrer"
                               className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold text-white bg-emerald-800 hover:bg-emerald-700 rounded-md transition-colors"
                             >
-                              <span>확인하기 (실시간 대출 현황 조회)</span>
+                              <span>{t.skkuCheckStatusBtn}</span>
                               <ArrowRight className="w-3.5 h-3.5" />
                             </a>
                           </div>
@@ -855,10 +935,10 @@ export default function App() {
                   ) : (
                     <div className="p-4 bg-slate-50 border border-dashed border-slate-300 rounded-lg text-xs text-slate-600 text-center space-y-1.5">
                       <p className="font-medium text-slate-800">
-                        현재 {skkuCampus === 'seoul' ? '인사캠(서울) 도서관' : '자캠(수원) 삼성학술정보관'} 서가에는 대출 가능한 실물 책이 모두 대출 중이거나 비치되어 있지 않습니다.
+                        {t.skkuNoShelfCopies(skkuCampus === 'seoul' ? t.campusSeoul : t.campusSuwon)}
                       </p>
                       <p className="text-[11px] text-slate-500">
-                        아래 전자책(E-Book) 또는 타 캠퍼스 상호대차 신청 도서를 확인해 보세요.
+                        {t.skkuTryAlternativesNote}
                       </p>
                     </div>
                   )}
@@ -869,16 +949,16 @@ export default function App() {
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-200 text-blue-900">
-                            상호대차 가능
+                            {t.skkuInterCampusBadge}
                           </span>
                           <span className="text-xs font-bold text-blue-950">
-                            {skkuCampus === 'seoul'
-                              ? '수원 삼성학술정보관 소장 중 (상호대차 신청 가능)'
-                              : '서울 중앙도서관 소장 중 (상호대차 신청 가능)'}
+                            {t.skkuInterCampusTitle(
+                              skkuCampus === 'seoul' ? t.campusSuwon : t.campusSeoul
+                            )}
                           </span>
                         </div>
                         <span className="text-[11px] text-blue-700">
-                          신청 시 1~2일 내 소속 캠퍼스 도서관 수령
+                          {t.skkuInterCampusNote}
                         </span>
                       </div>
 
@@ -893,7 +973,11 @@ export default function App() {
                                 {otherHolding.title}
                               </span>
                               <span className="text-[11px] text-blue-800 font-semibold">
-                                {otherHolding.campusNameKo}
+                                {lang === 'en'
+                                  ? otherHolding.campus === 'seoul'
+                                    ? 'Seoul Campus'
+                                    : 'Suwon Campus'
+                                  : otherHolding.campusNameKo}
                               </span>
                             </div>
                             <div className="text-[11px] text-slate-600">
@@ -913,7 +997,7 @@ export default function App() {
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1 text-xs font-semibold text-blue-900 hover:text-blue-700 hover:underline pt-1"
                             >
-                              <span>확인하기 (실시간 대출 현황 및 상호대차 신청)</span>
+                              <span>{t.skkuInterCampusAction}</span>
                               <ExternalLink className="w-3 h-3" />
                             </a>
                           </div>
@@ -928,14 +1012,14 @@ export default function App() {
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
                         <div className="flex items-center gap-2">
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-100 text-indigo-900 border border-indigo-200">
-                            [💻 전자책 바로보기 / E-Book Available]
+                            {t.skkuEbookBadge}
                           </span>
                           <span className="text-xs font-bold text-indigo-950">
-                            SKKU 기관구독 전자도서관 (Web / 모바일 앱)
+                            {t.skkuEbookTitle}
                           </span>
                         </div>
                         <span className="text-[11px] text-indigo-700">
-                          대출 대기 없음 · 24시간 교외접속
+                          {t.skkuEbookSub}
                         </span>
                       </div>
 
@@ -961,7 +1045,7 @@ export default function App() {
                             rel="noopener noreferrer"
                             className="inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-indigo-900 hover:bg-indigo-800 rounded transition-colors whitespace-nowrap shrink-0"
                           >
-                            <span>확인하기 (실시간 대출 현황 조회)</span>
+                            <span>{t.skkuEbookAction}</span>
                             <ArrowRight className="w-3.5 h-3.5" />
                           </a>
                         </div>
@@ -973,7 +1057,7 @@ export default function App() {
                   <div className="flex items-start gap-2 pt-1 text-[11px] text-slate-500">
                     <AlertCircle className="w-3.5 h-3.5 shrink-0 text-slate-400 mt-0.5" />
                     <span>
-                      <strong>실시간 연동 투명성 안내:</strong> 도서관 현장 열람석 지정 및 분 단위 대출 예약 현황은 교외 보안 정책상 브라우저에서 직접 스크랩되지 않으므로, 각 카드의 <em>[확인하기 (실시간 대출 현황 조회)]</em> 버튼을 통해 SKKU 학술정보관 공식 페이지에서 최신 1분 대출/예약 상태를 확인하시기 바랍니다.
+                      <strong>{t.skkuLiveNoticeTitle}</strong> {t.skkuLiveNoticeBody}
                     </span>
                   </div>
                 </div>
@@ -988,10 +1072,10 @@ export default function App() {
                   <div className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-lg">
                     {(
                       [
-                        { id: 'all', label: 'All' },
-                        { id: 'new', label: 'New' },
-                        { id: 'used', label: 'Used' },
-                        { id: 'digital', label: 'eBook' },
+                        { id: 'all', label: t.filters.all },
+                        { id: 'new', label: t.filters.new },
+                        { id: 'used', label: t.filters.used },
+                        { id: 'digital', label: t.filters.digital },
                       ] as const
                     ).map((tab) => (
                       <button
@@ -1012,9 +1096,9 @@ export default function App() {
                   <div className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-lg">
                     {(
                       [
-                        { id: 'total_cost', label: 'Lowest Price' },
-                        { id: 'effective_cost', label: 'After Points' },
-                        { id: 'speed', label: 'Fastest' },
+                        { id: 'total_cost', label: t.sortModes.total_cost },
+                        { id: 'effective_cost', label: t.sortModes.effective_cost },
+                        { id: 'speed', label: t.sortModes.speed },
                       ] as const
                     ).map((mode) => (
                       <button
@@ -1052,7 +1136,7 @@ export default function App() {
                       }
                       className="rounded border-slate-300 text-blue-900 focus:ring-blue-900"
                     />
-                    <span>Coupang WOW</span>
+                    <span>{t.filterCoupangWow}</span>
                   </label>
 
                   <label className="inline-flex items-center gap-1.5 cursor-pointer select-none text-slate-700">
@@ -1067,7 +1151,7 @@ export default function App() {
                       }
                       className="rounded border-slate-300 text-blue-900 focus:ring-blue-900"
                     />
-                    <span>Store Pickup Only</span>
+                    <span>{t.filterStorePickup}</span>
                   </label>
 
                   <button
@@ -1076,7 +1160,7 @@ export default function App() {
                     className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors cursor-pointer"
                   >
                     <Download className="w-3 h-3" />
-                    <span>CSV</span>
+                    <span>{t.exportCsvBtn}</span>
                   </button>
                 </div>
               </div>
@@ -1086,7 +1170,7 @@ export default function App() {
                 {processedOffers.length === 0 ? (
                   <div className="p-10 text-center space-y-2">
                     <p className="text-sm text-slate-600">
-                      No offers match the selected filter.
+                      {t.noOffersFound}
                     </p>
                     <button
                       type="button"
@@ -1096,7 +1180,7 @@ export default function App() {
                       }}
                       className="px-3.5 py-1.5 text-xs font-semibold text-white bg-slate-900 rounded-lg cursor-pointer"
                     >
-                      Reset Filter
+                      {t.resetFiltersBtn}
                     </button>
                   </div>
                 ) : (
@@ -1104,22 +1188,24 @@ export default function App() {
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold text-slate-500">
-                          <th className="py-3 pl-5 pr-2 w-12">#</th>
-                          <th className="py-3 px-3">Store</th>
-                          <th className="py-3 px-3">Condition</th>
-                          <th className="py-3 px-3 text-right">Book Price</th>
-                          <th className="py-3 px-3 text-right">Shipping</th>
+                          <th className="py-3 pl-5 pr-2 w-12">{t.tableHeaders.rank}</th>
+                          <th className="py-3 px-3">{t.tableHeaders.store}</th>
+                          <th className="py-3 px-3">{t.tableHeaders.condition}</th>
+                          <th className="py-3 px-3 text-right">{t.tableHeaders.basePrice}</th>
+                          <th className="py-3 px-3 text-right">{t.tableHeaders.shipping}</th>
                           <th className="py-3 px-3 text-right">
-                            {preferences.deductRewardPoints ? 'Net Price' : 'Total Price'}
+                            {preferences.deductRewardPoints
+                              ? t.tableHeaders.netPrice
+                              : t.tableHeaders.totalPrice}
                           </th>
-                          <th className="py-3 px-3">Delivery</th>
-                          <th className="py-3 pl-3 pr-5 text-right">Action</th>
+                          <th className="py-3 px-3">{t.tableHeaders.delivery}</th>
+                          <th className="py-3 pl-3 pr-5 text-right">{t.tableHeaders.action}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200 text-sm">
                         {processedOffers.map(({ offer, metrics }, index) => {
                           const isExpanded = expandedOfferId === offer.id;
-                          const isInCart = cart.some(
+                          const isInBookBag = bookBag.some(
                             (c) =>
                               c.textbookId === activeTextbook.id && c.offer.id === offer.id
                           );
@@ -1141,7 +1227,9 @@ export default function App() {
                                 </td>
 
                                 <td className="py-3.5 px-3 font-semibold text-slate-900 whitespace-nowrap">
-                                  {offer.platformNameKo}
+                                  {lang === 'en' && offer.platformNameEn
+                                    ? offer.platformNameEn
+                                    : offer.platformNameKo}
                                 </td>
 
                                 <td className="py-3.5 px-3 whitespace-nowrap">
@@ -1161,7 +1249,7 @@ export default function App() {
                                 <td className="py-3.5 px-3 text-right font-mono tabular-nums text-xs whitespace-nowrap">
                                   {metrics.shipping === 0 ? (
                                     <span className="text-emerald-700 font-semibold">
-                                      Free
+                                      {t.freeShippingBadge}
                                     </span>
                                   ) : (
                                     <span className="text-slate-600">
@@ -1201,22 +1289,23 @@ export default function App() {
                                   <div className="inline-flex items-center gap-1.5">
                                     <button
                                       type="button"
-                                      onClick={() => handleAddToCart(offer)}
+                                      onClick={() => handleAddToBookBag(offer)}
                                       className={`inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                                        isInCart
+                                        isInBookBag
                                           ? 'bg-emerald-700 text-white'
                                           : 'bg-slate-900 text-white hover:bg-slate-800'
                                       }`}
+                                      title={isInBookBag ? t.inBookBagBtn : t.addToBookBagBtn}
                                     >
-                                      {isInCart ? (
+                                      {isInBookBag ? (
                                         <>
                                           <Check className="w-3 h-3" />
-                                          <span>Added</span>
+                                          <span>{t.inBookBagBtn}</span>
                                         </>
                                       ) : (
                                         <>
                                           <Plus className="w-3 h-3" />
-                                          <span>Cart</span>
+                                          <span>{t.addToBookBagBtn}</span>
                                         </>
                                       )}
                                     </button>
@@ -1227,7 +1316,7 @@ export default function App() {
                                       rel="noopener noreferrer"
                                       className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-100 transition-colors whitespace-nowrap shrink-0"
                                     >
-                                      <span>Visit</span>
+                                      <span>{t.visitStoreBtn}</span>
                                       <ExternalLink className="w-3 h-3" />
                                     </a>
 
@@ -1237,7 +1326,7 @@ export default function App() {
                                         setExpandedOfferId(isExpanded ? null : offer.id)
                                       }
                                       className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer"
-                                      aria-label="Details"
+                                      aria-label={t.detailsBtn}
                                     >
                                       {isExpanded ? (
                                         <ChevronUp className="w-4 h-4" />
@@ -1254,11 +1343,11 @@ export default function App() {
                                   <td colSpan={8} className="px-5 py-3 text-xs text-slate-600">
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                       <p>
-                                        <strong className="text-slate-900">Tip:</strong>{' '}
+                                        <strong className="text-slate-900">{t.tipLabel}</strong>{' '}
                                         {offer.studentTip}
                                       </p>
                                       <span className="font-mono tabular-nums text-slate-500 shrink-0">
-                                        Reward Points: +{formatKrw(offer.rewardPointsKrw)}
+                                        {t.rewardPointsLabel} +{formatKrw(offer.rewardPointsKrw)}
                                       </span>
                                     </div>
                                   </td>
@@ -1279,7 +1368,7 @@ export default function App() {
               {/* Digital / Older Edition Alternatives */}
               <div className="lg:col-span-7 bg-white border border-slate-200 rounded-xl p-5 space-y-3">
                 <h3 className="text-sm font-bold text-slate-900">
-                  Cheaper Alternatives (eBook & Previous Editions)
+                  {t.alternativesTitle}
                 </h3>
                 <div className="divide-y divide-slate-100">
                   {activeTextbook.alternatives.map((alt) => (
@@ -1290,12 +1379,14 @@ export default function App() {
                         </span>
                         <span className="text-sm font-bold text-emerald-700 font-mono tabular-nums shrink-0">
                           {alt.estimatedCostKrw === 0
-                            ? '₩0 (Free)'
+                            ? t.alternativesFree
                             : formatKrw(alt.estimatedCostKrw)}
                         </span>
                       </div>
                       <p className="text-xs text-slate-600">{alt.pros}</p>
-                      <p className="text-[11px] text-slate-500">Note: {alt.cons}</p>
+                      <p className="text-[11px] text-slate-500">
+                        {t.alternativesNote} {alt.cons}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -1304,13 +1395,10 @@ export default function App() {
               {/* Compact Advisor Box */}
               <div className="lg:col-span-5 bg-white border border-slate-200 rounded-xl p-5 space-y-3">
                 <h3 className="text-sm font-bold text-slate-900">
-                  Ask About Edition or Binding (분철/바이백)
+                  {t.advisorTitle}
                 </h3>
                 <div className="flex flex-wrap gap-1.5">
-                  {[
-                    '구판으로 공부해도 되나요?',
-                    '분철 vs 학기말 알라딘 바이백?',
-                  ].map((q) => (
+                  {t.advisorSampleChips.map((q) => (
                     <button
                       key={q}
                       type="button"
@@ -1332,7 +1420,7 @@ export default function App() {
                     type="text"
                     value={advisorQuestion}
                     onChange={(e) => setAdvisorQuestion(e.target.value)}
-                    placeholder="Ask a question..."
+                    placeholder={t.advisorPlaceholder}
                     className="flex-1 px-3 py-1.5 text-xs bg-[#FAF9F6] border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-900"
                   />
                   <button
@@ -1340,7 +1428,7 @@ export default function App() {
                     disabled={isAdvisorLoading}
                     className="px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 rounded-lg hover:bg-slate-800 disabled:opacity-60 whitespace-nowrap shrink-0 cursor-pointer"
                   >
-                    {isAdvisorLoading ? '...' : 'Ask'}
+                    {isAdvisorLoading ? '...' : t.advisorAskBtn}
                   </button>
                 </form>
                 {advisorAnswer && (
@@ -1354,42 +1442,51 @@ export default function App() {
         )}
       </main>
 
-      {/* Slide-Over Semester Cart Drawer */}
-      {isCartOpen && (
+      {/* Slide-Over Semester Book Bag Drawer */}
+      {isBookBagOpen && (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-xs">
           <div className="w-full max-w-md bg-white h-full shadow-2xl border-l border-slate-200 flex flex-col justify-between overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-              <h2 className="text-base font-bold text-slate-900">
-                Semester Cart ({cart.length})
-              </h2>
+              <div className="flex items-center gap-2">
+                <BookMarked className="w-4 h-4 text-emerald-800" />
+                <h2 className="text-base font-bold text-slate-900">
+                  {t.bagDrawerTitle(bookBag.length)}
+                </h2>
+              </div>
               <button
                 type="button"
-                onClick={() => setIsCartOpen(false)}
+                onClick={() => setIsBookBagOpen(false)}
                 className="p-1.5 text-slate-500 hover:text-slate-900 rounded-lg cursor-pointer"
-                aria-label="Close cart"
+                aria-label={t.bagCloseAria}
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-3">
-              {cart.length === 0 ? (
-                <div className="text-center py-12 space-y-2">
-                  <ShoppingBag className="w-7 h-7 text-slate-400 mx-auto" />
-                  <p className="text-sm text-slate-600">Your cart is empty.</p>
+              {bookBag.length === 0 ? (
+                <div className="text-center py-12 px-4 space-y-2">
+                  <BookMarked className="w-8 h-8 text-slate-400 mx-auto" />
+                  <p className="text-sm font-semibold text-slate-800">{t.bagEmptyTitle}</p>
+                  <p className="text-xs text-slate-500 leading-relaxed">{t.bagEmptyDesc}</p>
                 </div>
               ) : (
-                cart.map((item) => (
+                bookBag.map((item) => (
                   <div
-                    key={item.cartItemId}
+                    key={item.bagItemId}
                     className="p-3.5 rounded-xl bg-[#FAF9F6] border border-slate-200 flex items-start justify-between gap-3"
                   >
                     <div className="space-y-1">
                       <div className="text-xs text-slate-500">
-                        {item.offer.platformNameKo} · {item.offer.condition}
+                        {lang === 'en' && item.offer.platformNameEn
+                          ? item.offer.platformNameEn
+                          : item.offer.platformNameKo}{' '}
+                        · {item.offer.condition}
                       </div>
                       <h3 className="text-sm font-bold text-slate-900">
-                        {item.textbookTitleKo}
+                        {lang === 'en' && item.textbookTitleEn
+                          ? item.textbookTitleEn
+                          : item.textbookTitleKo}
                       </h3>
                       <div className="text-xs font-mono tabular-nums text-slate-900 font-semibold">
                         {formatKrw(item.offer.basePriceKrw)}
@@ -1400,16 +1497,17 @@ export default function App() {
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 text-xs text-blue-900 hover:underline pt-0.5"
                       >
-                        <span>Go to store</span>
+                        <span>{t.bagGoToStore}</span>
                         <ExternalLink className="w-3 h-3" />
                       </a>
                     </div>
 
                     <button
                       type="button"
-                      onClick={() => handleRemoveFromCart(item.cartItemId)}
+                      onClick={() => handleRemoveFromBookBag(item.bagItemId)}
                       className="p-1 text-slate-400 hover:text-red-600 cursor-pointer"
-                      aria-label="Remove"
+                      aria-label={t.bagRemoveAria}
+                      title={t.bagRemoveAria}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -1419,25 +1517,38 @@ export default function App() {
             </div>
 
             <div className="p-6 border-t border-slate-200 bg-[#FAF9F6] space-y-3">
+              {/* Comparison & Planning Notice (Never check out on site) */}
+              <div className="p-2.5 bg-amber-50/80 border border-amber-200/80 rounded-lg text-[11px] text-amber-900 leading-relaxed">
+                {t.bagDisclaimer}
+              </div>
+
               <div className="space-y-1.5 text-xs">
                 <div className="flex justify-between text-slate-600">
-                  <span>Books Subtotal</span>
+                  <span>{t.bagSubtotalBooks}</span>
                   <span className="font-mono tabular-nums">
-                    {formatKrw(cartSummary.totalBasePrice)}
+                    {formatKrw(bookBagSummary.totalBasePrice)}
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-600">
-                  <span>Shipping</span>
+                  <span>{t.bagShippingTotal}</span>
                   <span className="font-mono tabular-nums">
-                    {cartSummary.totalShipping === 0
-                      ? '₩0 (Free)'
-                      : formatKrw(cartSummary.totalShipping)}
+                    {bookBagSummary.totalShipping === 0
+                      ? t.freeShippingBadge
+                      : formatKrw(bookBagSummary.totalShipping)}
                   </span>
                 </div>
+                {bookBagSummary.totalSaved > 0 && (
+                  <div className="flex justify-between text-emerald-700 font-semibold">
+                    <span>{t.bagTotalSaved}</span>
+                    <span className="font-mono tabular-nums">
+                      -{formatKrw(bookBagSummary.totalSaved)}
+                    </span>
+                  </div>
+                )}
                 <div className="pt-2 border-t border-slate-200 flex justify-between items-baseline text-sm font-bold text-slate-900">
-                  <span>Total</span>
+                  <span>{t.bagTotalEstimated}</span>
                   <span className="font-mono tabular-nums text-lg">
-                    {formatKrw(cartSummary.grandTotal)}
+                    {formatKrw(bookBagSummary.grandTotal)}
                   </span>
                 </div>
               </div>

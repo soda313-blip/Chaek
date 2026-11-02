@@ -461,7 +461,7 @@ function buildDeterministicTextbookAnalysis(rawQuery: string) {
         stockDetail: '무료배송 · T멤버십/SK페이 포인트 차감 가능',
         rewardPointsKrw: Math.round(st11Price * 0.04),
         studentTip:
-          'T멤버십 할인 및 카드사 장바구니 쿠폰, SK페이 포인트를 중복 적용할 수 있어 온라인 새책 구매 시 유리합니다.',
+          'T멤버십 할인 및 카드사 결제할인 쿠폰, SK페이 포인트를 중복 적용할 수 있어 온라인 새책 구매 시 유리합니다.',
         directSearchUrl: `https://search.11st.co.kr/Search.tmall?kwd=${encodedQuery}`,
       },
       {
@@ -684,7 +684,7 @@ function buildDeterministicAdvisorAnswer(
 
   return `[${textbookTitle} (${isbn})] 대학생 맞춤형 구매 & 배송비 절약 팁:
 • 영문 원서 vs 한글 번역본: 교수님 강의안(PPT)과 시험 문제가 영어로 출제된다면 번역본보다 International Edition(원서 페이퍼백)이나 eBook 대여가 용어 혼선이 없고 가격도 저렴합니다.
-• 무료배송 기준 활용: 교보문고·예스24·11번가 도서는 ₩15,000 이상, 알라딘 직배송 중고는 ₩20,000 이상, 쿠팡은 ₩19,800(와우회원 무제한 무료) 이상일 때 배송비가 ₩0입니다. 부족한 금액은 학기 중 필요한 연습장이나 다른 교양 교재와 장바구니에서 묶음 결제하세요.`;
+• 무료배송 기준 활용: 교보문고·예스24·11번가 도서는 ₩15,000 이상, 알라딘 직배송 중고는 ₩20,000 이상, 쿠팡은 ₩19,800(와우회원 무제한 무료) 이상일 때 배송비가 ₩0입니다. 부족한 금액은 학기 중 필요한 연습장이나 다른 교양 교재와 함께 묶어서 무료배송 기준을 맞추세요.`;
 }
 
 app.post('/api/textbook/search', async (req, res) => {

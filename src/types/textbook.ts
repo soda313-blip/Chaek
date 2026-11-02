@@ -105,11 +105,17 @@ export interface StudentPreferences {
   deductRewardPoints: boolean;
 }
 
-export interface CartItem {
-  cartItemId: string;
+export type AppLanguage = 'ko' | 'en';
+
+export interface BookBagItem {
+  bagItemId: string;
   textbookId: string;
   textbookTitleKo: string;
+  textbookTitleEn?: string;
   isbn13: string;
   listPriceKrw: number;
   offer: PlatformOffer;
 }
+
+// Backward compatibility alias
+export type CartItem = BookBagItem;
