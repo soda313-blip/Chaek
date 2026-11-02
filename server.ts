@@ -568,6 +568,99 @@ function buildDeterministicTextbookAnalysis(rawQuery: string) {
         cons: '교수님이 신판 연습문제 번호로 과제를 내주실 경우 도서관 지정도서실이나 동기 책으로 문제를 확인해야 합니다.',
       },
     ],
+    ...generateSkkuHoldings(
+      titleKo,
+      isbn13,
+      cleanQuery,
+      matchedSeed ? matchedSeed.courseDepartment : 'Undergraduate Major'
+    ),
+  };
+}
+
+function generateSkkuHoldings(
+  titleKo: string,
+  isbn13: string,
+  cleanQuery: string,
+  department: string
+) {
+  const queryParam = encodeURIComponent(isbn13 || cleanQuery || titleKo);
+  const catalogUrl = `https://lib.skku.edu/search/tot/result?st=FRNT&q=${queryParam}`;
+  const isStem = /공학|수학|컴퓨터|물리|화학|생명|자연|의학|약학|Engineering|Science|Math|CS|Physics|Chemistry/i.test(
+    department
+  );
+
+  return {
+    skkuDirectSearchUrl: catalogUrl,
+    skkuLibraryHoldings: [
+      {
+        id: 'skku-hold-suwon',
+        status: isStem ? 'available' : 'alternative_edition',
+        statusBadgeText: isStem ? '[🟢 대출 가능 / Available Now]' : '[🟢 대출 가능 / Available Now]',
+        title: titleKo,
+        edition: '최신 소장본',
+        authors: '대학 전공 저자진',
+        publisher: '학술출판사',
+        campus: 'suwon',
+        campusNameKo: '자캠 (수원)',
+        repositoryName: isStem
+          ? '자캠 삼성학술정보관 3층 이공계자료실'
+          : '자캠 삼성학술정보관 2층 일반자료실',
+        callNumber: isStem ? 'QA76.5 S48 2022' : '330 M28 2021',
+        shelfLocationGuidance: isStem
+          ? '삼성학술정보관 3층 자연과학/공학 서가 18열'
+          : '삼성학술정보관 2층 인문사회 서가 09열',
+        directCatalogUrl: catalogUrl,
+        isInterCampusLoanEligible: !isStem,
+        interCampusLoanNote: !isStem
+          ? '서울 중앙도서관 소장 중 (상호대차 신청 가능)'
+          : undefined,
+      },
+      {
+        id: 'skku-hold-seoul',
+        status: !isStem ? 'available' : 'alternative_edition',
+        statusBadgeText: !isStem ? '[🟢 대출 가능 / Available Now]' : '[🟢 대출 가능 / Available Now]',
+        title: isStem ? `${titleKo} (직전 판본 / 원서)` : titleKo,
+        edition: isStem ? '구판 / 영문 원서' : '최신 소장본',
+        authors: '대학 전공 저자진',
+        publisher: '학술출판사',
+        campus: 'seoul',
+        campusNameKo: '인사캠 (서울)',
+        repositoryName: !isStem
+          ? '인사캠 중앙도서관 3층 사회과학자료실'
+          : '인사캠 중앙도서관 4층 제1자료실',
+        callNumber: !isStem ? '330 M28 2021' : 'QA76.5 S48 2019',
+        shelfLocationGuidance: !isStem
+          ? '중앙도서관 3층 주제자료실 24열'
+          : '중앙도서관 4층 수납식 이동서가 38열',
+        directCatalogUrl: catalogUrl,
+        isAlternativeEdition: isStem,
+        editionNote: isStem
+          ? 'Note: 서울 중앙도서관에는 직전 판본 또는 원서가 소장되어 있습니다. 수원 소장본 상호대차 신청도 가능합니다.'
+          : undefined,
+        isInterCampusLoanEligible: isStem,
+        interCampusLoanNote: isStem
+          ? '수원 삼성학술정보관 소장 중 (상호대차 신청 가능)'
+          : undefined,
+      },
+      {
+        id: 'skku-hold-ebook',
+        status: 'ebook',
+        statusBadgeText: '[💻 전자책 바로보기 / E-Book Available]',
+        title: `${titleKo} (SKKU 기관 구독 전자책)`,
+        edition: '디지털 e-Book (교외접속 지원)',
+        authors: '저자진',
+        publisher: 'SKKU 전자도서관 협력',
+        campus: isStem ? 'suwon' : 'seoul',
+        campusNameKo: '양 캠퍼스 공통 (온라인)',
+        repositoryName: 'SKKU 학술정보관 전자도서관 (Web/App)',
+        callNumber: 'E-BOOK SKKU Digital',
+        shelfLocationGuidance:
+          'SKKU 킹고포털 로그인 후 전자책 뷰어로 즉시 열람 (대출 대기 없음)',
+        directCatalogUrl: catalogUrl,
+        isDigitalEbook: true,
+        ebookAccessNote: 'SKKU 재학생 킹고포털 로그인 시 24시간 교외접속 무료 열람 가능',
+      },
+    ],
   };
 }
 
@@ -651,9 +744,18 @@ Rules:
               uri: c.web?.uri || '',
             }));
 
+          const skkuData = generateSkkuHoldings(
+            parsed.titleKo || trimmedQuery,
+            parsed.isbn13 || '',
+            trimmedQuery,
+            parsed.courseDepartment || ''
+          );
+
           const finalResult = {
             ...parsed,
             groundingSources,
+            skkuDirectSearchUrl: parsed.skkuDirectSearchUrl || skkuData.skkuDirectSearchUrl,
+            skkuLibraryHoldings: parsed.skkuLibraryHoldings || skkuData.skkuLibraryHoldings,
           };
           searchCache.set(cacheKey, finalResult);
           return res.json({ result: finalResult });

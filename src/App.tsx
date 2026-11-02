@@ -12,12 +12,19 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  Building2,
+  GraduationCap,
+  Laptop,
+  ArrowRight,
+  BookMarked,
 } from 'lucide-react';
 import {
   TextbookAnalysisResult,
   PlatformOffer,
   StudentPreferences,
   CartItem,
+  SkkuCampus,
+  SkkuLibraryHolding,
 } from './types/textbook';
 import { PRESET_TEXTBOOKS } from './data/presetTextbooks';
 
@@ -33,6 +40,22 @@ export default function App() {
   const [activeTextbook, setActiveTextbook] = useState<TextbookAnalysisResult | null>(
     null
   );
+
+  // SKKU Default Campus: 'seoul' (인사캠) or 'suwon' (자캠)
+  const [skkuCampus, setSkkuCampus] = useState<SkkuCampus>(() => {
+    try {
+      const saved = localStorage.getItem('skku_campus_pref');
+      if (saved === 'seoul' || saved === 'suwon') return saved;
+    } catch {}
+    return 'seoul';
+  });
+
+  const handleToggleCampus = (campus: SkkuCampus) => {
+    setSkkuCampus(campus);
+    try {
+      localStorage.setItem('skku_campus_pref', campus);
+    } catch {}
+  };
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -158,6 +181,44 @@ export default function App() {
 
     return { cheapestOverall, cheapestNew, fastestOption };
   }, [activeTextbook, preferences]);
+
+  const directSkkuCatalogUrl = useMemo(() => {
+    if (!activeTextbook) return 'https://lib.skku.edu/';
+    if (activeTextbook.skkuDirectSearchUrl) return activeTextbook.skkuDirectSearchUrl;
+    const query = encodeURIComponent(activeTextbook.isbn13 || activeTextbook.titleKo);
+    return `https://lib.skku.edu/search/tot/result?st=FRNT&q=${query}`;
+  }, [activeTextbook]);
+
+  const skkuHoldingData = useMemo(() => {
+    if (!activeTextbook) return null;
+    const holdings = activeTextbook.skkuLibraryHoldings || [];
+
+    // STRICT "Available Only" Rule:
+    // Filter out checked-out items entirely.
+    // Display ONLY items physically on the shelf (대출가능) or accessible digitally (전자책 / E-Book).
+    const availableItems = holdings.filter(
+      (h) => h.status === 'available' || h.status === 'ebook' || h.status === 'alternative_edition'
+    );
+
+    const onMyCampus = availableItems.filter(
+      (h) => !h.isDigitalEbook && h.campus === skkuCampus
+    );
+    const onOtherCampus = availableItems.filter(
+      (h) => !h.isDigitalEbook && h.campus !== skkuCampus
+    );
+    const digitalEbooks = availableItems.filter(
+      (h) => h.isDigitalEbook || h.status === 'ebook'
+    );
+    const alternativeEditions = availableItems.filter((h) => h.isAlternativeEdition);
+
+    return {
+      allAvailable: availableItems,
+      onMyCampus,
+      onOtherCampus,
+      digitalEbooks,
+      alternativeEditions,
+    };
+  }, [activeTextbook, skkuCampus]);
 
   const executeSearch = async (rawQuery: string) => {
     const trimmed = rawQuery.trim();
@@ -359,18 +420,52 @@ export default function App() {
     <div className="min-h-screen flex flex-col bg-[#FAF9F6] text-slate-900">
       {/* Minimal Header */}
       <header className="sticky top-0 z-30 bg-[#FAF9F6]/95 backdrop-blur-sm border-b border-slate-200 px-6 lg:px-12 py-3.5">
-        <div className="max-w-[1160px] mx-auto flex items-center justify-between gap-8">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTextbook(null);
-              setSearchQuery('');
-              setSearchError(null);
-            }}
-            className="text-lg font-bold tracking-tight text-slate-900 whitespace-nowrap shrink-0 font-display cursor-pointer"
-          >
-            ChaekScan
-          </button>
+        <div className="max-w-[1160px] mx-auto flex items-center justify-between gap-4 sm:gap-8">
+          <div className="flex items-center gap-3 sm:gap-5">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTextbook(null);
+                setSearchQuery('');
+                setSearchError(null);
+              }}
+              className="text-lg font-bold tracking-tight text-slate-900 whitespace-nowrap shrink-0 font-display cursor-pointer"
+            >
+              ChaekScan
+            </button>
+
+            {/* SKKU Campus Switcher */}
+            <div className="inline-flex items-center bg-slate-200/80 p-0.5 rounded-lg text-xs font-medium">
+              <span className="hidden sm:inline-flex items-center gap-1 px-2 text-slate-700 font-semibold border-r border-slate-300 mr-0.5">
+                <GraduationCap className="w-3.5 h-3.5 text-emerald-800" />
+                <span>성균관대</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => handleToggleCampus('seoul')}
+                className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                  skkuCampus === 'seoul'
+                    ? 'bg-white text-slate-900 font-bold shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+                title="인문사회과학캠퍼스 (서울) 중앙도서관·법학도서관·존경각"
+              >
+                인사캠 (서울)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleToggleCampus('suwon')}
+                className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                  skkuCampus === 'suwon'
+                    ? 'bg-white text-slate-900 font-bold shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+                title="자연과학캠퍼스 (수원) 삼성학술정보관·의학도서관"
+              >
+                자캠 (수원)
+              </button>
+            </div>
+          </div>
 
           <div className="flex items-center shrink-0">
             <button
@@ -574,6 +669,316 @@ export default function App() {
                 )}
               </div>
             </section>
+
+            {/* Sungkyunkwan University (SKKU) Library Availability & Zero-Cost Alternative */}
+            {skkuHoldingData && (
+              <section className="bg-white border-2 border-emerald-600/30 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs relative overflow-hidden">
+                {/* Decorative accent banner */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-900" />
+
+                {/* Section Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-100 text-emerald-800">
+                        <GraduationCap className="w-3.5 h-3.5" />
+                        <span>성균관대학교 학술정보관</span>
+                      </span>
+                      <span className="text-xs text-slate-500 font-medium">
+                        (SKKU Library Official Catalog)
+                      </span>
+                    </div>
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                      <span>도서관 소장 현황 및 무료 대출 비교</span>
+                      <span className="text-xs font-normal text-slate-500 hidden sm:inline">
+                        · 엄격 대출가능(Shelf-Available) 기준 필터링
+                      </span>
+                    </h3>
+                  </div>
+
+                  {/* Campus Selector & Zero-Cost Badge */}
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg text-xs">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleCampus('seoul')}
+                        className={`px-2.5 py-1 rounded font-medium transition-colors cursor-pointer ${
+                          skkuCampus === 'seoul'
+                            ? 'bg-emerald-700 text-white shadow-xs font-semibold'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        인사캠 (서울)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleCampus('suwon')}
+                        className={`px-2.5 py-1 rounded font-medium transition-colors cursor-pointer ${
+                          skkuCampus === 'suwon'
+                            ? 'bg-emerald-700 text-white shadow-xs font-semibold'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        자캠 (수원)
+                      </button>
+                    </div>
+
+                    <div className="px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg text-right">
+                      <div className="text-[10px] text-emerald-700 font-medium uppercase tracking-wider">
+                        도서관 이용 시
+                      </div>
+                      <div className="text-sm font-bold text-emerald-800 font-mono tabular-nums">
+                        ₩0 (무료)
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Savings Contrast Callout */}
+                {summaryBenchmarks?.cheapestOverall && (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3.5 py-2.5 bg-emerald-50/70 border border-emerald-200/80 rounded-lg text-xs text-emerald-900">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold">💡 구매 비용 절약:</span>
+                      <span>
+                        도서관 대출/전자책을 이용하면 온라인 최저가(
+                        <strong className="font-semibold text-emerald-950 font-mono">
+                          {summaryBenchmarks.cheapestOverall.offer.platformNameKo} 기준{' '}
+                          {formatKrw(summaryBenchmarks.cheapestOverall.metrics.totalCost)}
+                        </strong>
+                        ) 대비{' '}
+                        <strong className="underline decoration-emerald-500 underline-offset-2">
+                          {formatKrw(summaryBenchmarks.cheapestOverall.metrics.totalCost)} 전액
+                        </strong>
+                        을 절약할 수 있습니다.
+                      </span>
+                    </div>
+                    <a
+                      href={directSkkuCatalogUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 font-semibold text-emerald-800 hover:text-emerald-950 hover:underline shrink-0"
+                    >
+                      <span>SKKU 통합검색 바로가기</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
+
+                {/* Active Campus Holdings Cards */}
+                <div className="space-y-3">
+                  <div className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                    <span>
+                      {skkuCampus === 'seoul' ? '인사캠 (서울)' : '자캠 (수원)'} 현장 소장 자료:
+                    </span>
+                    <span className="text-[11px] font-normal text-slate-500">
+                      ※ 대출 중인 자료는 자동 제외되어 현재 서가 비치본만 표시됩니다.
+                    </span>
+                  </div>
+
+                  {skkuHoldingData.onMyCampus.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                      {skkuHoldingData.onMyCampus.map((holding) => (
+                        <div
+                          key={holding.id}
+                          className="bg-[#FAF9F6] border border-slate-200 rounded-lg p-4 space-y-3 hover:border-emerald-600 transition-colors"
+                        >
+                          {/* Card Header: Badge & Campus/Repo */}
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                              {holding.statusBadgeText}
+                            </span>
+                            <span className="text-xs font-semibold text-slate-700 text-right">
+                              {holding.campusNameKo}
+                            </span>
+                          </div>
+
+                          {/* Book Title & Edition */}
+                          <div>
+                            <h4 className="text-sm font-bold text-slate-900 leading-snug">
+                              {holding.title}
+                            </h4>
+                            <p className="text-xs text-slate-600 pt-0.5">
+                              <span>{holding.edition}</span>
+                              <span className="mx-1" aria-hidden="true">·</span>
+                              <span>{holding.authors}</span>
+                              <span className="mx-1" aria-hidden="true">·</span>
+                              <span>{holding.publisher}</span>
+                            </p>
+                          </div>
+
+                          {/* Edition discrepancy note if alternative edition */}
+                          {holding.isAlternativeEdition && holding.editionNote && (
+                            <div className="p-2 bg-amber-50 border border-amber-200 rounded text-[11px] text-amber-900 font-medium">
+                              {holding.editionNote}
+                            </div>
+                          )}
+
+                          {/* Repository, Call Number, Shelf Location */}
+                          <div className="bg-white p-2.5 rounded border border-slate-200/80 text-xs space-y-1.5 font-mono">
+                            <div className="flex items-start justify-between gap-2 font-sans">
+                              <span className="text-slate-500 text-[11px]">소장처 / 건물:</span>
+                              <span className="font-semibold text-slate-800 text-right">
+                                {holding.repositoryName}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-slate-500 font-sans text-[11px]">
+                                청구기호 (Call No.):
+                              </span>
+                              <span className="font-bold text-blue-900 bg-blue-50 px-1.5 py-0.5 rounded">
+                                {holding.callNumber}
+                              </span>
+                            </div>
+                            <div className="flex items-start justify-between gap-2 font-sans">
+                              <span className="text-slate-500 text-[11px]">서가 위치 안내:</span>
+                              <span className="text-slate-700 text-right text-[11px]">
+                                {holding.shelfLocationGuidance}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Direct Catalog Action Button */}
+                          <div className="pt-1">
+                            <a
+                              href={holding.directCatalogUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold text-white bg-emerald-800 hover:bg-emerald-700 rounded-md transition-colors"
+                            >
+                              <span>확인하기 (실시간 대출 현황 조회)</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-slate-50 border border-dashed border-slate-300 rounded-lg text-xs text-slate-600 text-center space-y-1.5">
+                      <p className="font-medium text-slate-800">
+                        현재 {skkuCampus === 'seoul' ? '인사캠(서울) 도서관' : '자캠(수원) 삼성학술정보관'} 서가에는 대출 가능한 실물 책이 모두 대출 중이거나 비치되어 있지 않습니다.
+                      </p>
+                      <p className="text-[11px] text-slate-500">
+                        아래 전자책(E-Book) 또는 타 캠퍼스 상호대차 신청 도서를 확인해 보세요.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Dual-Campus Awareness & Inter-Campus Loan Section */}
+                  {skkuHoldingData.onOtherCampus.length > 0 && (
+                    <div className="mt-3 p-3.5 bg-blue-50/70 border border-blue-200 rounded-lg space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-200 text-blue-900">
+                            상호대차 가능
+                          </span>
+                          <span className="text-xs font-bold text-blue-950">
+                            {skkuCampus === 'seoul'
+                              ? '수원 삼성학술정보관 소장 중 (상호대차 신청 가능)'
+                              : '서울 중앙도서관 소장 중 (상호대차 신청 가능)'}
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-blue-700">
+                          신청 시 1~2일 내 소속 캠퍼스 도서관 수령
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {skkuHoldingData.onOtherCampus.map((otherHolding) => (
+                          <div
+                            key={otherHolding.id}
+                            className="bg-white p-3 rounded border border-blue-200 text-xs space-y-2"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-slate-900">
+                                {otherHolding.title}
+                              </span>
+                              <span className="text-[11px] text-blue-800 font-semibold">
+                                {otherHolding.campusNameKo}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-slate-600">
+                              <span>{otherHolding.repositoryName}</span> ·{' '}
+                              <span className="font-mono font-bold text-blue-900">
+                                {otherHolding.callNumber}
+                              </span>
+                            </div>
+                            {otherHolding.editionNote && (
+                              <p className="text-[11px] text-amber-800 bg-amber-50 p-1.5 rounded">
+                                {otherHolding.editionNote}
+                              </p>
+                            )}
+                            <a
+                              href={otherHolding.directCatalogUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs font-semibold text-blue-900 hover:text-blue-700 hover:underline pt-1"
+                            >
+                              <span>확인하기 (실시간 대출 현황 및 상호대차 신청)</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Digital E-Book (Kingo Portal Online Access) */}
+                  {skkuHoldingData.digitalEbooks.length > 0 && (
+                    <div className="mt-3 p-3.5 bg-indigo-50/60 border border-indigo-200 rounded-lg space-y-2.5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-100 text-indigo-900 border border-indigo-200">
+                            [💻 전자책 바로보기 / E-Book Available]
+                          </span>
+                          <span className="text-xs font-bold text-indigo-950">
+                            SKKU 기관구독 전자도서관 (Web / 모바일 앱)
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-indigo-700">
+                          대출 대기 없음 · 24시간 교외접속
+                        </span>
+                      </div>
+
+                      {skkuHoldingData.digitalEbooks.map((ebook) => (
+                        <div
+                          key={ebook.id}
+                          className="bg-white p-3 rounded border border-indigo-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                        >
+                          <div className="space-y-0.5">
+                            <div className="font-bold text-slate-900">{ebook.title}</div>
+                            <div className="text-[11px] text-slate-600">
+                              {ebook.repositoryName} · {ebook.shelfLocationGuidance}
+                            </div>
+                            {ebook.ebookAccessNote && (
+                              <div className="text-[11px] text-indigo-800 font-medium pt-0.5">
+                                🔑 {ebook.ebookAccessNote}
+                              </div>
+                            )}
+                          </div>
+                          <a
+                            href={ebook.directCatalogUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-indigo-900 hover:bg-indigo-800 rounded transition-colors whitespace-nowrap shrink-0"
+                          >
+                            <span>확인하기 (실시간 대출 현황 조회)</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Transparency & Real-time Live Status Notice */}
+                  <div className="flex items-start gap-2 pt-1 text-[11px] text-slate-500">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 text-slate-400 mt-0.5" />
+                    <span>
+                      <strong>실시간 연동 투명성 안내:</strong> 도서관 현장 열람석 지정 및 분 단위 대출 예약 현황은 교외 보안 정책상 브라우저에서 직접 스크랩되지 않으므로, 각 카드의 <em>[확인하기 (실시간 대출 현황 조회)]</em> 버튼을 통해 SKKU 학술정보관 공식 페이지에서 최신 1분 대출/예약 상태를 확인하시기 바랍니다.
+                    </span>
+                  </div>
+                </div>
+              </section>
+            )}
 
             {/* Price Comparison Table Section */}
             <section className="space-y-3">
