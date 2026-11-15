@@ -105,7 +105,7 @@ export interface StudentPreferences {
   deductRewardPoints: boolean;
 }
 
-export type AppLanguage = 'ko' | 'en';
+export type AppLanguage = 'ko' | 'en' | 'zh';
 
 export interface BookBagItem {
   bagItemId: string;

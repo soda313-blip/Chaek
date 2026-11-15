@@ -511,4 +511,327 @@ export const TRANSLATIONS: Record<AppLanguage, TranslationStrings> = {
     budgetCopyBtn: 'Copy to Clipboard',
     budgetCopiedBtn: 'Copied!',
   },
+  zh: {
+    brandTitle: 'ChaekScan',
+    skkuBadge: '成均馆大',
+    campusSeoul: '人文校区 (首尔)',
+    campusSuwon: '自然校区 (水原)',
+    campusSeoulTooltip: '人文社会科学校区 (首尔)：中央图书馆 · 法学图书馆 · 尊经阁',
+    campusSuwonTooltip: '自然科学校区 (水原)：三星学术信息馆 · 医学图书馆',
+    bookBagBtn: (count) => `书包 (${count})`,
+
+    modeSearchTab: '单本教材比价搜索',
+    modeBudgetTab: '预算购书规划器 (AI Optimizer)',
+
+    heroTitle: '大学教材全网比价 & 图书馆馆藏查询',
+    heroSubtitle:
+      '一站式对比教保文库、YES24、阿拉丁、永丰文库、书店ON、11街、酷澎含运费实付价，并实时核对成均馆大学图书馆馆藏状态。',
+    searchPlaceholder:
+      '输入教材名称、作者或13位ISBN（如：微积分、曼昆经济学、9791160733877）',
+    searchBtn: '搜索',
+    searchingBtn: '搜索中...',
+    clearSearch: '清除搜索词',
+    tryPrefix: '热门教材：',
+    tryItems: [
+      { label: '微积分 (Stewart)', query: '미분적분학' },
+      { label: '曼昆经济学原理', query: '맨큐의 경제학' },
+      { label: '操作系统概念', query: '운영체제' },
+      { label: '有机化学 (McMurry)', query: '맥머리 유기화학' },
+    ],
+    searchingStatus: (query) => `正在对比7大韩国书店及成均馆大学图书馆馆藏：“${query}”...`,
+    calculatingShipping: '正在计算运费及实付总价',
+
+    listPriceLabel: '教材定价',
+    cheapestOverallLabel: '最低实付价',
+    lowestNewLabel: '新书最低价',
+    fastestDeliveryLabel: '最快送达',
+
+    skkuSectionTitle: '成均馆大学图书馆馆藏 & 免费借阅',
+    skkuSectionSubtitle: '· 严格筛选在架可借 (Shelf-Available) 馆藏',
+    skkuFreeBadge: '图书馆借阅',
+    skkuFreeSub: '₩0 (免费借阅)',
+    skkuSavingsNotice: (store, storePrice, savings) =>
+      `💡 省钱提示：通过图书馆借阅实体书或使用电子书，相比全网最低价（${store}：${storePrice}）可全额节省 ${savings}。`,
+    skkuDirectCatalogBtn: '馆藏目录检索',
+    skkuShelfHoldingsTitle: (campusName) => `${campusName} 在架馆藏：`,
+    skkuStrictFilterNote: '※ 已借出图书自动隐藏，仅显示当前在架可借阅或电子书资源。',
+    skkuNoShelfCopies: (campusName) =>
+      `当前 ${campusName} 书架上暂无可借阅的实体教材（已全部借出或未收录）。`,
+    skkuTryAlternativesNote: '请查看下方机构订阅电子书 (E-Book) 或申请跨校区互借。',
+    skkuRepositoryLabel: '馆藏地 / 楼层：',
+    skkuCallNumberLabel: '索书号 (Call No.)：',
+    skkuShelfLocationLabel: '书架位置指引：',
+    skkuCheckStatusBtn: '查看详情 (实时借阅状态核对)',
+    skkuInterCampusBadge: '跨校区互借',
+    skkuInterCampusTitle: (otherCampusName) => `${otherCampusName} 有馆藏（可申请校区互借）`,
+    skkuInterCampusNote: '申请后1~2个工作日内送达所属校区图书馆服务台',
+    skkuInterCampusAction: '查看详情 (实时馆藏及跨校区互借申请)',
+    skkuEbookBadge: '[💻 电子书 / E-Book Available]',
+    skkuEbookTitle: 'SKKU 机构订阅电子图书馆 (网页 / 移动端)',
+    skkuEbookSub: '无需排队等待 · 24小时校外访问',
+    skkuEbookAction: '查看详情 (在线阅读电子书)',
+    skkuLiveNoticeTitle: '实时馆藏同步说明：',
+    skkuLiveNoticeBody:
+      '受校园网安全策略限制，浏览器无法直接抓取分钟级预约锁定状态。请点击卡片上的【查看详情】按钮前往成均馆大学图书馆官网核对最新实时在架状态。',
+
+    filters: {
+      all: '全部',
+      new: '新书',
+      used: '二手',
+      digital: '电子书',
+    },
+    sortModes: {
+      total_cost: '最低总价',
+      effective_cost: '抵扣积分后',
+      speed: '最快送达',
+    },
+    filterCoupangWow: 'Coupang WOW会员',
+    filterStorePickup: '仅看门店自提',
+    exportCsvBtn: '导出 CSV',
+
+    tableHeaders: {
+      rank: '#',
+      store: '书店平台',
+      condition: '品相 / 书价',
+      basePrice: '图书单价',
+      shipping: '运费',
+      totalPrice: '实付总价',
+      netPrice: '折算价 (扣积分)',
+      delivery: '预计送达',
+      action: '操作',
+    },
+    freeShippingBadge: '免运费',
+    inBookBagBtn: '已加',
+    addToBookBagBtn: '书包',
+    visitStoreBtn: '去书店',
+    detailsBtn: '详情',
+    tipLabel: '购书贴士：',
+    rewardPointsLabel: '预计返积分：',
+    noOffersFound: '没有符合当前筛选条件的书店报价。',
+    resetFiltersBtn: '重置筛选',
+
+    alternativesTitle: '更省钱的替代方案（电子书租赁 & 往期旧版）',
+    alternativesFree: '₩0 (免费)',
+    alternativesNote: '注意：',
+    advisorTitle: '教材版本兼容性 & 拆书装订/二手回收咨询',
+    advisorSampleChips: [
+      '用上一版（旧版）教材上课可以吗？',
+      '拆书螺旋装订 (분철) vs 期末二手卖回？',
+    ],
+    advisorPlaceholder: '输入关于本教材版本、习题或装订的问题...',
+    advisorAskBtn: '提问',
+
+    bagDrawerTitle: (count) => `学期教材书包 (${count})`,
+    bagCloseAria: '关闭书包',
+    bagEmptyTitle: '书包还是空的',
+    bagEmptyDesc: '在比价结果中点击“+ 书包”，即可汇总对比本学期教材总费用与满额免运费优惠。',
+    bagDisclaimer:
+      'ℹ️ ChaekScan 是专为大学生设计的教材比价与学期预算规划工具，不直接进行在线收款。实际购买请点击各书店的“去书店”链接完成。',
+    bagSubtotalBooks: '教材单价合计',
+    bagShippingTotal: '预计总运费',
+    bagTotalEstimated: '本学期预计总支出',
+    bagTotalSaved: '相比定价共节省',
+    bagRemoveAria: '从书包中移除',
+    bagGoToStore: '去书店购买',
+    bagOptimizeBtn: '将书包清单导入预算规划器进行 AI 优化',
+
+    budgetHeroTitle: '学期教材预算规划器 & AI 智能优化',
+    budgetHeroSubtitle:
+      '输入您的目标预算（韩元 KRW）与本学期必修教材或课程名称，系统将优先分配成均馆大学图书馆免费馆藏（₩0）并组合7大韩国书店的新书、二手书（99新/95新）及电子书，确保总支出控制在预算内。',
+    budgetTargetLabel: '本学期教材目标预算 (KRW)',
+    budgetPresetLabel: '快捷预算：',
+    budgetBooksLabel: '必修教材或课程清单',
+    budgetBookInputPlaceholder: '输入教材名或课程名后按 Enter（支持逗号分隔批量添加）',
+    budgetAddBookBtn: '+ 添加教材',
+    budgetPresetsTitle: '一键加载专业推荐课程教材包：',
+    budgetPresetBundles: [
+      {
+        label: '计算机与软件工程 4门核心课 (预算 ₩70,000)',
+        budget: 70000,
+        books: ['Operating System Concepts', 'Introduction to Algorithms (CLRS)', 'Linear Algebra (Strang)', 'Computer Networking (Kurose)'],
+      },
+      {
+        label: '理工科大一基础 4门课 (预算 ₩80,000)',
+        budget: 80000,
+        books: ['Stewart Calculus', 'Halliday Physics', 'Zumdahl Chemistry', 'Campbell Biology'],
+      },
+      {
+        label: '商科与经济学 3门核心课 (预算 ₩50,000)',
+        budget: 50000,
+        books: ['Mankiw Principles of Economics', 'IFRS Principles of Accounting', 'Introductory Statistics'],
+      },
+    ],
+    budgetPrioritizeLibraryLabel: '优先分配成均馆大学图书馆免费借阅 & 电子书 (₩0)',
+    budgetPrioritizeLibraryDesc:
+      '为防止超出预算并最大化省钱，优先将图书馆在架实体书或机构电子书分配为 ₩0。',
+    budgetGenerateBtn: '生成预算内最优购书方案',
+    budgetGeneratingBtn: '正在核算7大书店实时价格、凑单运费及SKKU馆藏最优组合...',
+    budgetSummaryHeading: '📊 预算总览 / Budget Summary',
+    budgetTargetCardLabel: '目标预算 (Target Budget)',
+    budgetEstimatedCardLabel: '最优方案总费用 (Total Cost)',
+    budgetRemainingCardLabel: '预算结余 / 状态 (Balance)',
+    budgetTotalSavedCardLabel: '相比定价总节省 (Total Saved)',
+    budgetListHeading: '📚 最优推荐购书清单 / Optimized Procurement List',
+    budgetColBook: '教材名称 (Book Title)',
+    budgetColSource: '购买渠道 / 图书馆 (Source / Vendor)',
+    budgetColCondition: '品相 / 类型 (Condition / Format)',
+    budgetColPriceShipping: '价格与运费 (Price & Shipping)',
+    budgetColAction: '直达链接 (Direct Action)',
+    budgetOpenLinkBtn: '前往查看',
+    budgetSwitchToLibraryBtn: '转为图书馆 ₩0',
+    budgetAdviceHeading: '💡 AI 省钱建议 / Smart Saving Advice',
+    budgetExportSectionTitle: '结构化报告导出 (Structured Markdown & JSON Summary)',
+    budgetViewVisualTab: '交互式表格',
+    budgetViewMarkdownTab: 'Markdown 汇总报告',
+    budgetViewJsonTab: 'JSON 数据摘要',
+    budgetCopyBtn: '复制到剪贴板',
+    budgetCopiedBtn: '已复制！',
+  },
 };
+
+export function localizeConditionTag(condition: string, lang: AppLanguage): string {
+  if (lang === 'ko') {
+    const koMap: Record<string, string> = {
+      New: '새책 (New)',
+      'Used - Like New (최상)': '중고 - 최상',
+      'Used - Good (상)': '중고 - 상',
+      'Used - Fair (중)': '중고 - 중',
+      'Digital eBook': '전자책 (eBook)',
+      'International Softcover': '해외원서 (페이퍼백)',
+    };
+    return koMap[condition] || condition;
+  }
+  if (lang === 'zh') {
+    const zhMap: Record<string, string> = {
+      New: '新书 (New)',
+      'Used - Like New (최상)': '二手-99新 (极好)',
+      'Used - Good (상)': '二手-95新 (良好)',
+      'Used - Fair (중)': '二手-九成新 (合格)',
+      'Digital eBook': '电子书 (eBook)',
+      'International Softcover': '国际平装版',
+    };
+    return zhMap[condition] || condition;
+  }
+  const enMap: Record<string, string> = {
+    New: 'New',
+    'Used - Like New (최상)': 'Used - Like New',
+    'Used - Good (상)': 'Used - Good',
+    'Used - Fair (중)': 'Used - Fair',
+    'Digital eBook': 'Digital eBook',
+    'International Softcover': 'Intl. Softcover',
+  };
+  return enMap[condition] || condition;
+}
+
+export function localizePlatformDisplayName(
+  platformId: string,
+  nameKo: string,
+  nameEn: string,
+  lang: AppLanguage
+): string {
+  if (lang === 'ko') return nameKo;
+  if (lang === 'en') return nameEn || nameKo;
+  const zhStoreMap: Record<string, string> = {
+    kyobo: '教保文库 (Kyobo)',
+    yes24: 'YES24 书店',
+    aladin: '阿拉丁二手/新书 (Aladin)',
+    youngpoong: '永丰文库 (Youngpoong)',
+    bookstore_on: '韩国书店ON (官方联盟)',
+    '11st': '11街图书 (11st)',
+    coupang: '酷澎火箭配送 (Coupang)',
+    skku_library: '成均馆大学图书馆 (SKKU)',
+  };
+  return zhStoreMap[platformId] || nameEn || nameKo;
+}
+
+export function localizeSkkuStatusBadge(
+  status: 'available' | 'ebook' | 'alternative_edition',
+  isAlternativeEdition: boolean | undefined,
+  defaultBadge: string,
+  lang: AppLanguage
+): string {
+  if (lang === 'zh') {
+    if (status === 'ebook') return '[💻 电子书 / E-Book Available]';
+    if (isAlternativeEdition || status === 'alternative_edition') {
+      return '[🟢 旧版在架 / Prior Edition On Shelf]';
+    }
+    return '[🟢 可借阅 / Available Now]';
+  }
+  if (lang === 'en') {
+    if (status === 'ebook') return '[💻 E-Book Available]';
+    if (isAlternativeEdition || status === 'alternative_edition') {
+      return '[🟢 Prior Edition On Shelf]';
+    }
+    return '[🟢 Available Now]';
+  }
+  return defaultBadge;
+}
+
+export function localizeSkkuRepository(repoName: string, lang: AppLanguage): string {
+  if (lang === 'ko') return repoName;
+  if (lang === 'zh') {
+    return repoName
+      .replace('인사캠 중앙도서관', '人文校区 中央图书馆')
+      .replace('중앙도서관', '中央图书馆')
+      .replace('자캠 삼성학술정보관', '自然校区 三星学术信息馆')
+      .replace('삼성학술정보관', '三星学术信息馆')
+      .replace('법학도서관', '法学图书馆')
+      .replace('존경각', '尊经阁')
+      .replace('의학도서관', '医学图书馆')
+      .replace('제1자료실', '第1资料室')
+      .replace('제2자료실', '第2资料室')
+      .replace('제3자료실', '第3资料室')
+      .replace('과학기술자료실', '科学技术资料室')
+      .replace('학술정보관 전자도서관', '学术信息馆 电子图书馆')
+      .replace('SKKU 전자도서관', 'SKKU 电子图书馆')
+      .replace(/(\d+)층/g, '$1层');
+  }
+  return repoName
+    .replace('인사캠 중앙도서관', 'Seoul Central Library')
+    .replace('중앙도서관', 'Central Library')
+    .replace('자캠 삼성학술정보관', 'Suwon Samsung Library')
+    .replace('삼성학술정보관', 'Samsung Library')
+    .replace('법학도서관', 'Law Library')
+    .replace('존경각', 'Jongyeonggak')
+    .replace('의학도서관', 'Medical Library')
+    .replace('제1자료실', 'Reading Room 1')
+    .replace('제2자료실', 'Reading Room 2')
+    .replace('제3자료실', 'Reading Room 3')
+    .replace('과학기술자료실', 'Sci-Tech Reading Room')
+    .replace('학술정보관 전자도서관', 'SKKU Digital E-Library')
+    .replace('SKKU 전자도서관', 'SKKU E-Library')
+    .replace(/(\d+)층/g, '$1F');
+}
+
+export function localizeSkkuShelfGuidance(guidance: string, lang: AppLanguage): string {
+  if (lang === 'ko') return guidance;
+  if (lang === 'zh') {
+    return guidance
+      .replace('자연과학', '自然科学')
+      .replace('사회과학', '社会科学')
+      .replace('응용과학', '应用科学')
+      .replace('공학', '工学')
+      .replace('전산학', '计算机科学')
+      .replace('경제/경영', '经济/经营')
+      .replace('화학/생명', '化学/生命科学')
+      .replace('수학', '数学')
+      .replace('서가', '书架')
+      .replace('교외접속 및 모바일 열람 가능', '支持校外访问及移动端在线阅读')
+      .replace('로그인 후 즉시 열람 가능', '登录校园账号后即可在线阅读')
+      .replace(/(\d+)층/g, '$1层');
+  }
+  return guidance
+    .replace('자연과학', 'Natural Sciences')
+    .replace('사회과학', 'Social Sciences')
+    .replace('응용과학', 'Applied Sciences')
+    .replace('공학', 'Engineering')
+    .replace('전산학', 'Computer Science')
+    .replace('경제/경영', 'Econ/Business')
+    .replace('화학/생명', 'Chem/Bio')
+    .replace('수학', 'Mathematics')
+    .replace('서가', 'Shelf')
+    .replace('교외접속 및 모바일 열람 가능', '24/7 Off-campus & mobile access')
+    .replace('로그인 후 즉시 열람 가능', 'Instant access after SKKU login')
+    .replace(/(\d+)층/g, '$1F');
+}
+

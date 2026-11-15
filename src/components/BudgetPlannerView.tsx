@@ -354,6 +354,8 @@ export default function BudgetPlannerView({
               <span>
                 {lang === 'en'
                   ? 'Sample course bundles & library options'
+                  : lang === 'zh'
+                  ? '推荐专业课程包与图书馆设置'
                   : '추천 과목 패키지 및 도서관 옵션 더보기'}
               </span>
               {showMoreOptions ? (
@@ -429,7 +431,13 @@ export default function BudgetPlannerView({
                     : 'bg-amber-50 text-amber-900 border border-amber-300'
                 }`}
               >
-                {lang === 'en' ? budgetPlan.statusBadgeEn : budgetPlan.statusBadgeKo}
+                {lang === 'en'
+                  ? budgetPlan.statusBadgeEn
+                  : lang === 'zh'
+                  ? budgetPlan.isWithinBudget
+                    ? '已优化至目标预算内'
+                    : '超出目标预算 — 建议借阅图书馆或选用旧版'
+                  : budgetPlan.statusBadgeKo}
               </span>
             </div>
 
@@ -442,6 +450,8 @@ export default function BudgetPlannerView({
                 <div className="text-[11px] text-slate-500 mt-0.5">
                   {lang === 'en'
                     ? `${budgetPlan.items.length} courses/books`
+                    : lang === 'zh'
+                    ? `共 ${budgetPlan.items.length} 门课程/教材`
                     : `총 ${budgetPlan.items.length}권 대상`}
                 </div>
               </div>
@@ -454,6 +464,10 @@ export default function BudgetPlannerView({
                 <div className="text-[11px] text-blue-200 font-mono tabular-nums mt-0.5">
                   {lang === 'en'
                     ? `Books ${formatKrw(budgetPlan.totalBaseCostKrw)} + Ship ${formatKrw(
+                        budgetPlan.totalShippingCostKrw
+                      )}`
+                    : lang === 'zh'
+                    ? `书费 ${formatKrw(budgetPlan.totalBaseCostKrw)} + 运费 ${formatKrw(
                         budgetPlan.totalShippingCostKrw
                       )}`
                     : `도서 ${formatKrw(budgetPlan.totalBaseCostKrw)} + 배송 ${formatKrw(
@@ -493,9 +507,13 @@ export default function BudgetPlannerView({
                   {budgetPlan.isWithinBudget
                     ? lang === 'en'
                       ? 'Remaining budget saved'
+                      : lang === 'zh'
+                      ? '目标预算内结余'
                       : '목표 예산 내 여유 잔액'
                     : lang === 'en'
                     ? 'Exceeds target — see library switch below'
+                    : lang === 'zh'
+                    ? '超出预算 — 建议下方切换图书馆 ₩0 借阅'
                     : '목표 예산 초과 — 아래 도서관 ₩0 전환 권장'}
                 </div>
               </div>
@@ -508,6 +526,8 @@ export default function BudgetPlannerView({
                 <div className="text-[11px] text-slate-500 font-mono tabular-nums mt-0.5">
                   {lang === 'en'
                     ? `List Total: ${formatKrw(budgetPlan.totalListPriceKrw)}`
+                    : lang === 'zh'
+                    ? `定价合计: ${formatKrw(budgetPlan.totalListPriceKrw)}`
                     : `정가 합계: ${formatKrw(budgetPlan.totalListPriceKrw)}`}
                 </div>
               </div>
@@ -591,19 +611,19 @@ export default function BudgetPlannerView({
                           </td>
                           <td className="py-4 px-3 align-top space-y-1">
                             <div className="font-bold text-slate-900">
-                              {lang === 'en' ? item.bookTitleEn : item.bookTitleKo}
+                              {lang !== 'ko' ? item.bookTitleEn : item.bookTitleKo}
                             </div>
                             <div className="text-xs text-slate-500 font-mono tabular-nums">
-                              {lang === 'en' ? 'List Price:' : '정가:'}{' '}
+                              {lang === 'en' ? 'List Price:' : lang === 'zh' ? '定价:' : '정가:'}{' '}
                               <span className="line-through">{formatKrw(item.listPriceKrw)}</span>
                               {' · '}ISBN {item.isbn13}
                             </div>
                             <p className="text-xs text-slate-600 pt-0.5">
-                              {lang === 'en' ? item.rationaleEn : item.rationaleKo}
+                              {lang !== 'ko' ? item.rationaleEn : item.rationaleKo}
                             </p>
                             {(item.compromiseTipKo || item.compromiseTipEn) && (
                               <p className="text-[11px] text-slate-500">
-                                💡 {lang === 'en' ? item.compromiseTipEn : item.compromiseTipKo}
+                                💡 {lang !== 'ko' ? item.compromiseTipEn : item.compromiseTipKo}
                               </p>
                             )}
                           </td>
@@ -613,7 +633,7 @@ export default function BudgetPlannerView({
                                 <GraduationCap className="w-4 h-4 text-emerald-700 shrink-0" />
                               )}
                               <span>
-                                {lang === 'en' ? item.sourceVendorEn : item.sourceVendorKo}
+                                {lang !== 'ko' ? item.sourceVendorEn : item.sourceVendorKo}
                               </span>
                             </div>
                           </td>
@@ -627,7 +647,7 @@ export default function BudgetPlannerView({
                                   : 'text-slate-700'
                               }`}
                             >
-                              {lang === 'en' ? item.conditionFormatEn : item.conditionFormatKo}
+                              {lang !== 'ko' ? item.conditionFormatEn : item.conditionFormatKo}
                             </span>
                           </td>
                           <td className="py-4 px-3 text-right font-mono tabular-nums align-top">
@@ -642,10 +662,14 @@ export default function BudgetPlannerView({
                               {isLibrary
                                 ? lang === 'en'
                                   ? 'Free Campus Loan'
+                                  : lang === 'zh'
+                                  ? '图书馆免费借阅'
                                   : '무료 대출'
                                 : item.shippingFeeKrw === 0
                                 ? lang === 'en'
                                   ? 'Free Shipping'
+                                  : lang === 'zh'
+                                  ? '免运费'
                                   : '배송비 무료'
                                 : `${formatKrw(item.basePriceKrw)} + ${formatKrw(
                                     item.shippingFeeKrw
@@ -680,7 +704,13 @@ export default function BudgetPlannerView({
                                   className="inline-flex items-center gap-0.5 text-[11px] text-slate-500 hover:text-blue-900 hover:underline cursor-pointer whitespace-nowrap"
                                 >
                                   <Search className="w-3 h-3" />
-                                  <span>{lang === 'en' ? '7-Store Compare' : '7대 서점 상세비교'}</span>
+                                  <span>
+                                    {lang === 'en'
+                                      ? '7-Store Compare'
+                                      : lang === 'zh'
+                                      ? '7大书店比价'
+                                      : '7대 서점 상세비교'}
+                                  </span>
                                 </button>
                               </div>
                             </div>
@@ -703,7 +733,7 @@ export default function BudgetPlannerView({
                     type="button"
                     onClick={() =>
                       handleCopyReport(
-                        lang === 'en' ? budgetPlan.markdownReportEn : budgetPlan.markdownReportKo
+                        lang !== 'ko' ? budgetPlan.markdownReportEn : budgetPlan.markdownReportKo
                       )
                     }
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-slate-300 rounded-lg text-slate-800 hover:bg-slate-50 cursor-pointer"
@@ -722,7 +752,7 @@ export default function BudgetPlannerView({
                   </button>
                 </div>
                 <pre className="p-4 rounded-lg bg-white border border-slate-200 text-xs font-mono text-slate-800 whitespace-pre-wrap overflow-x-auto leading-relaxed">
-                  {lang === 'en' ? budgetPlan.markdownReportEn : budgetPlan.markdownReportKo}
+                  {lang !== 'ko' ? budgetPlan.markdownReportEn : budgetPlan.markdownReportKo}
                 </pre>
               </div>
             )}
@@ -766,7 +796,7 @@ export default function BudgetPlannerView({
               {t.budgetAdviceHeading}
             </h2>
             <ul className="space-y-2 text-xs sm:text-sm text-slate-700 leading-relaxed list-disc pl-5">
-              {(lang === 'en'
+              {(lang !== 'ko'
                 ? budgetPlan.smartSavingAdviceEn
                 : budgetPlan.smartSavingAdviceKo
               ).map((tip, idx) => (

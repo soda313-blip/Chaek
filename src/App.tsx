@@ -30,7 +30,14 @@ import {
   BudgetPlanResult,
 } from './types/textbook';
 import { PRESET_TEXTBOOKS } from './data/presetTextbooks';
-import { TRANSLATIONS } from './data/translations';
+import {
+  TRANSLATIONS,
+  localizeConditionTag,
+  localizePlatformDisplayName,
+  localizeSkkuStatusBadge,
+  localizeSkkuRepository,
+  localizeSkkuShelfGuidance,
+} from './data/translations';
 import BudgetPlannerView from './components/BudgetPlannerView';
 
 type ConditionFilter = 'all' | 'new' | 'used' | 'digital';
@@ -42,11 +49,11 @@ function formatKrw(amount: number): string {
 }
 
 export default function App() {
-  // Language State: 'ko' (한국어) or 'en' (English)
+  // Language State: 'ko' (한국어), 'en' (English), or 'zh' (中文)
   const [lang, setLang] = useState<AppLanguage>(() => {
     try {
       const saved = localStorage.getItem('chaekscan_lang');
-      if (saved === 'ko' || saved === 'en') return saved;
+      if (saved === 'ko' || saved === 'en' || saved === 'zh') return saved;
     } catch {}
     return 'ko';
   });
@@ -134,6 +141,8 @@ export default function App() {
       setBudgetPlanError(
         lang === 'en'
           ? 'Please add at least one textbook or course.'
+          : lang === 'zh'
+          ? '请至少添加一本教材或一门课程。'
           : '최소 1권 이상의 교재명 또는 과목명을 추가해 주세요.'
       );
       return;
@@ -166,6 +175,8 @@ export default function App() {
           ? err.message
           : lang === 'en'
           ? 'An error occurred while generating the budget plan.'
+          : lang === 'zh'
+          ? '生成预算方案时发生错误，请重试。'
           : '예산 플랜을 생성하는 중 오류가 발생했습니다.'
       );
     } finally {
@@ -402,6 +413,19 @@ export default function App() {
             '재고 상태',
             '서점 바로가기 URL',
           ]
+        : lang === 'zh'
+        ? [
+            '排名',
+            '书店平台',
+            '品相状态',
+            '图书单价 (KRW)',
+            '运费 (KRW)',
+            '实付总价 (KRW)',
+            '预计返积分 (KRW)',
+            '预计送达',
+            '库存状态',
+            '直达链接 URL',
+          ]
         : [
             'Rank',
             'Platform',
@@ -416,8 +440,8 @@ export default function App() {
           ];
     const rows = processedOffers.map(({ offer, metrics }, idx) => [
       idx + 1,
-      `"${offer.platformNameKo}"`,
-      `"${offer.condition}"`,
+      `"${localizePlatformDisplayName(offer.platformId, offer.platformNameKo, offer.platformNameEn, lang)}"`,
+      `"${localizeConditionTag(offer.condition, lang)}"`,
       offer.basePriceKrw,
       metrics.shipping,
       metrics.totalCost,
@@ -567,7 +591,7 @@ export default function App() {
               </button>
             </div>
 
-            {/* Language Switcher (Korean / English) */}
+            {/* Language Switcher (Korean / English / Chinese) */}
             <div className="inline-flex items-center bg-slate-200/80 p-0.5 rounded-lg text-xs font-medium">
               <span className="hidden sm:inline-flex items-center px-1.5 text-slate-600">
                 <Globe className="w-3.5 h-3.5" />
@@ -595,6 +619,18 @@ export default function App() {
                 title="Switch to English search & guide page"
               >
                 English
+              </button>
+              <button
+                type="button"
+                onClick={() => handleToggleLanguage('zh')}
+                className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                  lang === 'zh'
+                    ? 'bg-white text-slate-900 font-bold shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+                title="切换至中文比价与图书馆查询界面"
+              >
+                中文
               </button>
             </div>
           </div>
@@ -846,7 +882,11 @@ export default function App() {
                       <div className="flex items-center gap-2">
                         <GraduationCap className="w-4 h-4 text-emerald-800 shrink-0" />
                         <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                          {lang === 'en' ? 'SKKU Library Holdings' : '성균관대 도서관 소장 정보'}
+                          {lang === 'en'
+                            ? 'SKKU Library Holdings'
+                            : lang === 'zh'
+                            ? '成均馆大图书馆馆藏'
+                            : '성균관대 도서관 소장 정보'}
                         </h3>
                       </div>
 
@@ -882,7 +922,9 @@ export default function App() {
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold text-emerald-900 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition-colors whitespace-nowrap"
                         >
-                          <span>{lang === 'en' ? 'Catalog' : '통합검색'}</span>
+                          <span>
+                            {lang === 'en' ? 'Catalog' : lang === 'zh' ? '馆藏目录' : '통합검색'}
+                          </span>
                           <ExternalLink className="w-3 h-3" />
                         </a>
                       </div>
@@ -900,20 +942,17 @@ export default function App() {
                               >
                                 <div className="flex items-center justify-between gap-2">
                                   <span className="text-xs font-bold text-emerald-800">
-                                    {lang === 'en'
-                                      ? holding.status === 'ebook'
-                                        ? '[💻 E-Book Available]'
-                                        : holding.isAlternativeEdition
-                                        ? '[🟢 Prior Edition On Shelf]'
-                                        : '[🟢 Available Now]'
-                                      : holding.statusBadgeText}
+                                    {localizeSkkuStatusBadge(
+                                      holding.status,
+                                      holding.isAlternativeEdition,
+                                      holding.statusBadgeText,
+                                      lang
+                                    )}
                                   </span>
                                   <span className="text-xs font-semibold text-slate-600">
-                                    {lang === 'en'
-                                      ? holding.campus === 'seoul'
-                                        ? 'Seoul Campus'
-                                        : 'Suwon Campus'
-                                      : holding.campusNameKo}
+                                    {holding.campus === 'seoul'
+                                      ? t.campusSeoul
+                                      : t.campusSuwon}
                                   </span>
                                 </div>
 
@@ -940,7 +979,7 @@ export default function App() {
                                       {t.skkuRepositoryLabel}
                                     </span>
                                     <span className="font-semibold text-slate-800 text-right">
-                                      {holding.repositoryName}
+                                      {localizeSkkuRepository(holding.repositoryName, lang)}
                                     </span>
                                   </div>
                                   <div className="flex items-center justify-between gap-2">
@@ -956,7 +995,7 @@ export default function App() {
                                       {t.skkuShelfLocationLabel}
                                     </span>
                                     <span className="text-slate-700 text-right text-[11px]">
-                                      {holding.shelfLocationGuidance}
+                                      {localizeSkkuShelfGuidance(holding.shelfLocationGuidance, lang)}
                                     </span>
                                   </div>
                                 </div>
@@ -997,7 +1036,8 @@ export default function App() {
                             </div>
                             <div className="text-xs font-bold text-slate-900">{ebook.title}</div>
                             <div className="text-[11px] text-slate-600">
-                              {ebook.repositoryName} · {ebook.shelfLocationGuidance}
+                              {localizeSkkuRepository(ebook.repositoryName, lang)} ·{' '}
+                              {localizeSkkuShelfGuidance(ebook.shelfLocationGuidance, lang)}
                             </div>
                             <a
                               href={ebook.directCatalogUrl}
@@ -1028,7 +1068,7 @@ export default function App() {
                               </span>
                             </div>
                             <div className="text-[11px] text-slate-600">
-                              {otherHolding.repositoryName}
+                              {localizeSkkuRepository(otherHolding.repositoryName, lang)}
                             </div>
                             <a
                               href={otherHolding.directCatalogUrl}
@@ -1205,9 +1245,12 @@ export default function App() {
 
                                       <td className="py-3 px-2.5 align-top">
                                         <div className="font-semibold text-slate-900 text-xs sm:text-sm whitespace-nowrap">
-                                          {lang === 'en' && offer.platformNameEn
-                                            ? offer.platformNameEn
-                                            : offer.platformNameKo}
+                                          {localizePlatformDisplayName(
+                                            offer.platformId,
+                                            offer.platformNameKo,
+                                            offer.platformNameEn,
+                                            lang
+                                          )}
                                         </div>
                                         <div className="text-[11px] text-slate-500">
                                           {offer.estimatedDelivery}
@@ -1216,7 +1259,7 @@ export default function App() {
 
                                       <td className="py-3 px-2.5 align-top whitespace-nowrap">
                                         <div className="text-xs font-medium text-slate-800">
-                                          {offer.condition}
+                                          {localizeConditionTag(offer.condition, lang)}
                                         </div>
                                         <div className="text-[11px] text-slate-500 font-mono tabular-nums">
                                           {formatKrw(offer.basePriceKrw)}
@@ -1433,13 +1476,16 @@ export default function App() {
                   >
                     <div className="space-y-1">
                       <div className="text-xs text-slate-500">
-                        {lang === 'en' && item.offer.platformNameEn
-                          ? item.offer.platformNameEn
-                          : item.offer.platformNameKo}{' '}
-                        · {item.offer.condition}
+                        {localizePlatformDisplayName(
+                          item.offer.platformId,
+                          item.offer.platformNameKo,
+                          item.offer.platformNameEn,
+                          lang
+                        )}{' '}
+                        · {localizeConditionTag(item.offer.condition, lang)}
                       </div>
                       <h3 className="text-sm font-bold text-slate-900">
-                        {lang === 'en' && item.textbookTitleEn
+                        {lang !== 'ko' && item.textbookTitleEn
                           ? item.textbookTitleEn
                           : item.textbookTitleKo}
                       </h3>
