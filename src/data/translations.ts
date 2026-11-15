@@ -9,6 +9,10 @@ export interface TranslationStrings {
   campusSuwonTooltip: string;
   bookBagBtn: (count: number) => string;
 
+  // Workspace Mode Tabs
+  modeSearchTab: string;
+  modeBudgetTab: string;
+
   // Hero & Search
   heroTitle: string;
   heroSubtitle: string;
@@ -112,6 +116,46 @@ export interface TranslationStrings {
   bagTotalSaved: string;
   bagRemoveAria: string;
   bagGoToStore: string;
+  bagOptimizeBtn: string;
+
+  // Budget Book Planner & Optimizer
+  budgetHeroTitle: string;
+  budgetHeroSubtitle: string;
+  budgetTargetLabel: string;
+  budgetPresetLabel: string;
+  budgetBooksLabel: string;
+  budgetBookInputPlaceholder: string;
+  budgetAddBookBtn: string;
+  budgetPresetsTitle: string;
+  budgetPresetBundles: {
+    label: string;
+    budget: number;
+    books: string[];
+  }[];
+  budgetPrioritizeLibraryLabel: string;
+  budgetPrioritizeLibraryDesc: string;
+  budgetGenerateBtn: string;
+  budgetGeneratingBtn: string;
+  budgetSummaryHeading: string;
+  budgetTargetCardLabel: string;
+  budgetEstimatedCardLabel: string;
+  budgetRemainingCardLabel: string;
+  budgetTotalSavedCardLabel: string;
+  budgetListHeading: string;
+  budgetColBook: string;
+  budgetColSource: string;
+  budgetColCondition: string;
+  budgetColPriceShipping: string;
+  budgetColAction: string;
+  budgetOpenLinkBtn: string;
+  budgetSwitchToLibraryBtn: string;
+  budgetAdviceHeading: string;
+  budgetExportSectionTitle: string;
+  budgetViewVisualTab: string;
+  budgetViewMarkdownTab: string;
+  budgetViewJsonTab: string;
+  budgetCopyBtn: string;
+  budgetCopiedBtn: string;
 }
 
 export const TRANSLATIONS: Record<AppLanguage, TranslationStrings> = {
@@ -123,6 +167,9 @@ export const TRANSLATIONS: Record<AppLanguage, TranslationStrings> = {
     campusSeoulTooltip: '인문사회과학캠퍼스 (서울) 중앙도서관·법학도서관·존경각',
     campusSuwonTooltip: '자연과학캠퍼스 (수원) 삼성학술정보관·의학도서관',
     bookBagBtn: (count) => `책가방 (${count})`,
+
+    modeSearchTab: '개별 교재 최저가 검색',
+    modeBudgetTab: '예산 맞춤 북 플래너 (AI Optimizer)',
 
     heroTitle: '대학 교재 최저가 & 도서관 소장 비교기',
     heroSubtitle:
@@ -234,6 +281,59 @@ export const TRANSLATIONS: Record<AppLanguage, TranslationStrings> = {
     bagTotalSaved: '정가 대비 절약 금액',
     bagRemoveAria: '책가방에서 삭제',
     bagGoToStore: '서점 이동',
+    bagOptimizeBtn: '책가방 목록으로 예산 맞춤 최적화 실행',
+
+    budgetHeroTitle: '학기 예산 맞춤 북 플래너 & AI 최적화',
+    budgetHeroSubtitle:
+      '목표 예산(원)과 이번 학기 수강 과목·필수 교재 목록을 입력하면 성균관대 도서관 무료 대출(₩0)과 7대 서점 새책·중고·전자책 조합을 계산해 예산 내 최적 구매 플랜을 설계합니다.',
+    budgetTargetLabel: '목표 학기 교재 예산 (KRW)',
+    budgetPresetLabel: '빠른 예산 설정:',
+    budgetBooksLabel: '수강 과목 또는 필수 교재 목록',
+    budgetBookInputPlaceholder: '교재명 또는 과목명 입력 후 Enter (쉼표로 여러 권 동시 입력 가능)',
+    budgetAddBookBtn: '+ 목록 추가',
+    budgetPresetsTitle: '학과별 추천 샘플 패키지 불러오기:',
+    budgetPresetBundles: [
+      {
+        label: '컴퓨터·소프트웨어 4과목 (예산 ₩70,000)',
+        budget: 70000,
+        books: ['운영체제 (공룡책)', 'Introduction to Algorithms (CLRS)', '선형대수학 (Strang)', '컴퓨터 네트워킹 (Kurose)'],
+      },
+      {
+        label: '이공계 1학년 기초 4과목 (예산 ₩80,000)',
+        budget: 80000,
+        books: ['스튜어트 미분적분학', '할리데이 일반물리학', '줌달의 일반화학', '캠벨 생명과학'],
+      },
+      {
+        label: '경영·경제 핵심 3과목 (예산 ₩50,000)',
+        budget: 50000,
+        books: ['맨큐의 경제학', 'IFRS 회계학원리', '기초통계학'],
+      },
+    ],
+    budgetPrioritizeLibraryLabel: '성균관대 도서관 무료 대출 & 전자책(₩0) 우선 배정 허용',
+    budgetPrioritizeLibraryDesc:
+      '예산 초과 방지 및 최대 절약을 위해 도서관 비치본/전자도서관 열람 가능 교재를 ₩0으로 우선 배정합니다.',
+    budgetGenerateBtn: '예산 맞춤 최적 구매 플랜 생성',
+    budgetGeneratingBtn: '7대 서점 시세·배송비 및 SKKU 도서관 최적 조합 계산 중...',
+    budgetSummaryHeading: '📊 예산 요약 / Budget Summary',
+    budgetTargetCardLabel: '목표 예산 (Target Budget)',
+    budgetEstimatedCardLabel: '최적 조합 총비용 (Total Cost)',
+    budgetRemainingCardLabel: '예산 잔액 / 상태 (Balance)',
+    budgetTotalSavedCardLabel: '정가 대비 총 절약 (Total Saved)',
+    budgetListHeading: '📚 최적 추천 구매 목록 / Optimized Procurement List',
+    budgetColBook: '교재명 (Book Title)',
+    budgetColSource: '구매처 또는 도서관 (Source / Vendor)',
+    budgetColCondition: '상태 / 형태 (Condition / Format)',
+    budgetColPriceShipping: '가격 및 배송비 (Price & Shipping)',
+    budgetColAction: '이동 링크 (Direct Action)',
+    budgetOpenLinkBtn: '바로가기',
+    budgetSwitchToLibraryBtn: '도서관 ₩0 전환',
+    budgetAdviceHeading: '💡 AI 절약 팁 / Smart Saving Advice',
+    budgetExportSectionTitle: '출력 포맷 보기 (Structured Markdown & JSON Summary)',
+    budgetViewVisualTab: '인터랙티브 표 보기',
+    budgetViewMarkdownTab: 'Markdown 요약 리포트',
+    budgetViewJsonTab: 'JSON 데이터 요약',
+    budgetCopyBtn: '클립보드 복사',
+    budgetCopiedBtn: '복사 완료!',
   },
   en: {
     brandTitle: 'ChaekScan',
@@ -243,6 +343,9 @@ export const TRANSLATIONS: Record<AppLanguage, TranslationStrings> = {
     campusSeoulTooltip: 'Humanities & Social Sciences (Seoul): Central Library, Law Library, Jongyeonggak',
     campusSuwonTooltip: 'Natural Sciences (Suwon): Samsung Library, Medical Library',
     bookBagBtn: (count) => `Book Bag (${count})`,
+
+    modeSearchTab: 'Single Textbook Search',
+    modeBudgetTab: 'Budget Book Planner (AI Optimizer)',
 
     heroTitle: 'University Textbook Price & Library Finder',
     heroSubtitle:
@@ -354,5 +457,58 @@ export const TRANSLATIONS: Record<AppLanguage, TranslationStrings> = {
     bagTotalSaved: 'Estimated Total Savings',
     bagRemoveAria: 'Remove from book bag',
     bagGoToStore: 'Go to store',
+    bagOptimizeBtn: 'Optimize Book Bag in Budget Planner',
+
+    budgetHeroTitle: 'Budget Book Planner & AI Optimizer',
+    budgetHeroSubtitle:
+      'Enter your target budget (in KRW) and required textbooks or courses. ChaekScan allocates SKKU Library free loans (₩0) and the cheapest New, Used, or eBook options across 7 Korean bookstores to stay within your budget.',
+    budgetTargetLabel: 'Target Semester Budget (KRW)',
+    budgetPresetLabel: 'Quick Budget:',
+    budgetBooksLabel: 'Required Textbooks or Courses',
+    budgetBookInputPlaceholder: 'Enter textbook or course title & press Enter (comma-separated supported)',
+    budgetAddBookBtn: '+ Add Book',
+    budgetPresetsTitle: 'Load Sample Course Bundles:',
+    budgetPresetBundles: [
+      {
+        label: 'CS & Software 4-Course Bundle (₩70,000)',
+        budget: 70000,
+        books: ['Operating System Concepts', 'Introduction to Algorithms (CLRS)', 'Linear Algebra (Strang)', 'Computer Networking (Kurose)'],
+      },
+      {
+        label: 'STEM Freshman 4-Course Bundle (₩80,000)',
+        budget: 80000,
+        books: ['Stewart Calculus', 'Halliday Physics', 'Zumdahl Chemistry', 'Campbell Biology'],
+      },
+      {
+        label: 'Business & Econ 3-Course Bundle (₩50,000)',
+        budget: 50000,
+        books: ['Mankiw Principles of Economics', 'IFRS Principles of Accounting', 'Introductory Statistics'],
+      },
+    ],
+    budgetPrioritizeLibraryLabel: 'Prioritize SKKU Library Free Loans & E-Books (₩0)',
+    budgetPrioritizeLibraryDesc:
+      'Automatically assigns campus library or institutional e-Book copies (₩0) where needed to keep your total cost within budget.',
+    budgetGenerateBtn: 'Generate Optimized Budget Plan',
+    budgetGeneratingBtn: 'Optimizing across 7 Korean bookstores & SKKU Library...',
+    budgetSummaryHeading: '📊 예산 요약 / Budget Summary',
+    budgetTargetCardLabel: 'Target Budget',
+    budgetEstimatedCardLabel: 'Total Estimated Cost',
+    budgetRemainingCardLabel: 'Remaining Balance / Status',
+    budgetTotalSavedCardLabel: 'Total Saved vs. List Price',
+    budgetListHeading: '📚 최적 추천 구매 목록 / Optimized Procurement List',
+    budgetColBook: 'Book Title (교재명)',
+    budgetColSource: 'Source / Vendor (구매처 또는 도서관)',
+    budgetColCondition: 'Condition / Format (상태 / 형태)',
+    budgetColPriceShipping: 'Price & Shipping (가격 및 배송비)',
+    budgetColAction: 'Direct Action Link',
+    budgetOpenLinkBtn: 'Open Link',
+    budgetSwitchToLibraryBtn: 'Switch to Library ₩0',
+    budgetAdviceHeading: '💡 AI 절약 팁 / Smart Saving Advice',
+    budgetExportSectionTitle: 'Structured Markdown & JSON Summary',
+    budgetViewVisualTab: 'Interactive Table',
+    budgetViewMarkdownTab: 'Markdown Summary',
+    budgetViewJsonTab: 'JSON Summary',
+    budgetCopyBtn: 'Copy to Clipboard',
+    budgetCopiedBtn: 'Copied!',
   },
 };

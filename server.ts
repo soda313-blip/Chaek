@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import searchHandler from './api/textbook/search.ts';
 import advisorHandler from './api/textbook/advisor.ts';
+import budgetPlannerHandler from './api/textbook/budget-planner.ts';
 
 dotenv.config();
 
@@ -19,6 +20,10 @@ app.all('/api/textbook/search', (req, res) => {
 
 app.all('/api/textbook/advisor', (req, res) => {
   void advisorHandler(req, res);
+});
+
+app.all('/api/textbook/budget-planner', (req, res) => {
+  void budgetPlannerHandler(req, res);
 });
 
 async function startServer() {

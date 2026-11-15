@@ -119,3 +119,46 @@ export interface BookBagItem {
 
 // Backward compatibility alias
 export type CartItem = BookBagItem;
+
+export interface BudgetAllocationItem {
+  id: string;
+  bookTitleKo: string;
+  bookTitleEn: string;
+  courseOrQuery: string;
+  isbn13: string;
+  sourceVendorKo: string;
+  sourceVendorEn: string;
+  platformId: PlatformId | 'skku_library';
+  conditionFormatKo: string;
+  conditionFormatEn: string;
+  conditionCategory: 'library' | 'used' | 'digital' | 'new';
+  listPriceKrw: number;
+  basePriceKrw: number;
+  shippingFeeKrw: number;
+  totalPriceKrw: number;
+  directActionUrl: string;
+  rationaleKo: string;
+  rationaleEn: string;
+  compromiseTipKo?: string;
+  compromiseTipEn?: string;
+}
+
+export interface BudgetPlanResult {
+  targetBudgetKrw: number;
+  totalEstimatedCostKrw: number;
+  totalBaseCostKrw: number;
+  totalShippingCostKrw: number;
+  totalListPriceKrw: number;
+  totalSavedKrw: number;
+  remainingBudgetKrw: number;
+  isWithinBudget: boolean;
+  statusBadgeKo: string;
+  statusBadgeEn: string;
+  summaryTextKo: string;
+  summaryTextEn: string;
+  items: BudgetAllocationItem[];
+  smartSavingAdviceKo: string[];
+  smartSavingAdviceEn: string[];
+  markdownReportKo: string;
+  markdownReportEn: string;
+}
