@@ -2,8 +2,8 @@ import dotenv from 'dotenv';
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import searchHandler from './api/textbook/search';
-import advisorHandler from './api/textbook/advisor';
+import searchHandler from './api/textbook/search.ts';
+import advisorHandler from './api/textbook/advisor.ts';
 
 dotenv.config();
 
